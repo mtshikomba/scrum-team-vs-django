@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in | Client tasks</title>
+    <link rel="stylesheet" href="{% static 'core/landing.css' %}">
+</head>
+<body class="auth-page">
+    <main class="login-panel">
+        <span class="brand-mark">CT</span>
+        <p class="eyebrow">Client workspace</p>
+        <h1>Sign in to your tasks</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="primary-button primary-button--full" type="submit">Sign in</button>
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
+    </main>
+</body>
+</html>

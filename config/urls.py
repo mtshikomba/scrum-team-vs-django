@@ -16,11 +16,13 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
-from core.views import HealthCheckView
+from core.views import ClientLandingPageView, HealthCheckView
 
 urlpatterns = [
+    path("", ClientLandingPageView.as_view(), name="client-landing"),
+    path("accounts/", include("django.contrib.auth.urls")),
     path("health/", HealthCheckView.as_view(), name="health-check"),
     path("admin/", admin.site.urls),
 ]
