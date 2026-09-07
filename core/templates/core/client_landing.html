@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Client workspace</title>
+    <link rel="stylesheet" href="{% static 'core/landing.css' %}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="topbar">
+            <a class="brand" href="{% url 'client-landing' %}">
+                <span class="brand-mark">CT</span>
+                <span>Client tasks</span>
+            </a>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="text-button" type="submit">Sign out</button>
+            </form>
+        </header>
+
+        <main>
+            <section class="intro" aria-labelledby="page-title">
+                <div>
+                    <p class="eyebrow">Client workspace</p>
+                    <h1 id="page-title">Good to see you{% if user.first_name %}, {{ user.first_name }}{% endif %}.</h1>
+                    <p class="intro-copy">Keep an eye on the work that is moving your project forward.</p>
+                </div>
+                <a class="primary-button" href="#task-list">View tasks <span aria-hidden="true">&#8594;</span></a>
+            </section>
+
+            <section class="summary-grid" aria-label="Task summary">
+                <article class="summary-card summary-card--accent">
+                    <span class="summary-label">Outstanding</span>
+                    <strong>{{ task_counts.outstanding }}</strong>
+                    <span class="summary-note">Ready to pick up</span>
+                </article>
+                <article class="summary-card">
+                    <span class="summary-label">In progress</span>
+                    <strong>{{ task_counts.in_progress }}</strong>
+                    <span class="summary-note">Currently moving</span>
+                </article>
+                <article class="summary-card">
+                    <span class="summary-label">Completed</span>
+                    <strong>{{ task_counts.completed }}</strong>
+                    <span class="summary-note">Across your project</span>
+                </article>
+            </section>
+
+            <section class="task-section" id="task-list" aria-labelledby="task-list-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Your workspace</p>
+                        <h2 id="task-list-title">Task list</h2>
+                    </div>
+                    <span class="task-count">{{ tasks|length }} task{{ tasks|length|pluralize }}</span>
+                </div>
+
+                {% if tasks %}
+                    <div class="task-table" role="list">
+                        <div class="task-row task-row--header" aria-hidden="true">
+                            <span>Task</span><span>Status</span><span>Priority</span><span>Due</span>
+                        </div>
+                        {% for task in tasks %}
+                            <article class="task-row" role="listitem">
+                                <div class="task-name">
+                                    <span class="task-dot task-dot--{{ task.status }}"></span>
+                                    <div><strong>{{ task.title }}</strong><small>Updated {{ task.updated_at|date:"M j, Y" }}</small></div>
+                                </div>
+                                <span class="status status--{{ task.status }}">{{ task.get_status_display }}</span>
+                                <span class="priority priority--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                                <span class="due-date">{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}No due date{% endif %}</span>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true">+</span>
+                        <h3>No tasks yet</h3>
+                        <p>Your project tasks will appear here when they are ready.</p>
+                    </div>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</body>
+</html>
