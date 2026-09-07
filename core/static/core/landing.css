@@ -85,6 +85,11 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
 .detail-grid > div { display: grid; gap: 10px; padding: 22px; background: var(--white); }
 .detail-label { color: var(--muted); font: 700 0.68rem/1 Arial, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
 .detail-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.project-card { display: grid; gap: 14px; min-height: 130px; padding: 22px; color: var(--ink); background: var(--white); border: 1px solid var(--line); text-decoration: none; }
+.project-card:hover { border-color: var(--teal); }
+.project-card strong { font-size: 1.25rem; font-weight: 400; }
+.project-card span { color: var(--muted); font: 0.75rem/1 Arial, sans-serif; }
 .auth-switch { margin: 22px 0 0; color: var(--muted); font: 0.8rem/1.5 Arial, sans-serif; text-align: center; }
 .auth-switch a { color: var(--teal-dark); font-weight: 700; }
 .errorlist { margin: 6px 0 0; padding: 0; color: #9b4d16; font: 0.75rem/1.4 Arial, sans-serif; list-style: none; text-transform: none; }
@@ -106,4 +111,5 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
     .login-panel { padding: 30px 24px; }
     .detail-panel { padding: 52px 0; }
     .detail-grid { grid-template-columns: 1fr; }
+    .project-grid { grid-template-columns: 1fr; }
 }

@@ -27,7 +27,7 @@
                     <h1 id="page-title">Good to see you{% if user.first_name %}, {{ user.first_name }}{% endif %}.</h1>
                     <p class="intro-copy">Keep an eye on the work that is moving your project forward.</p>
                 </div>
-                <a class="primary-button" href="{% url 'task-create' %}">New task <span aria-hidden="true">+</span></a>
+                <a class="primary-button" href="{% url 'project-create' %}">New project <span aria-hidden="true">+</span></a>
             </section>
 
             <section class="summary-grid" aria-label="Task summary">
@@ -79,6 +79,32 @@
                         <span class="empty-icon" aria-hidden="true">+</span>
                         <h3>No tasks yet</h3>
                         <p>Your project tasks will appear here when they are ready.</p>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="task-section" aria-labelledby="project-list-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Project-first workflow</p>
+                        <h2 id="project-list-title">Your projects</h2>
+                    </div>
+                    <a class="secondary-button" href="{% url 'project-list' %}">View all</a>
+                </div>
+                {% if projects %}
+                    <div class="project-grid">
+                        {% for project in projects|slice:":3" %}
+                            <a class="project-card" href="{{ project.get_absolute_url }}">
+                                <strong>{{ project.name }}</strong>
+                                <span>{{ project.task_count }} task{{ project.task_count|pluralize }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <h3>Create your first project</h3>
+                        <p>Projects are the home for your tasks. Create one before adding work.</p>
+                        <a class="primary-button" href="{% url 'project-create' %}">Create project</a>
                     </div>
                 {% endif %}
             </section>
