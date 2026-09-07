@@ -18,12 +18,28 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from core.views import ClientLandingPageView, ClientRegistrationView, HealthCheckView
+from core.views import (
+    ClientLandingPageView,
+    ClientRegistrationView,
+    ClientTaskCreateView,
+    ClientTaskDeleteView,
+    ClientTaskDetailView,
+    ClientTaskUpdateView,
+    HealthCheckView,
+)
 
 urlpatterns = [
     path("", ClientLandingPageView.as_view(), name="client-landing"),
     path("accounts/register/", ClientRegistrationView.as_view(), name="register"),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("tasks/new/", ClientTaskCreateView.as_view(), name="task-create"),
+    path("tasks/<int:pk>/", ClientTaskDetailView.as_view(), name="task-detail"),
+    path("tasks/<int:pk>/edit/", ClientTaskUpdateView.as_view(), name="task-update"),
+    path(
+        "tasks/<int:pk>/delete/",
+        ClientTaskDeleteView.as_view(),
+        name="task-delete",
+    ),
     path("health/", HealthCheckView.as_view(), name="health-check"),
     path("admin/", admin.site.urls),
 ]
