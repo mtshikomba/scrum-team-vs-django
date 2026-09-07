@@ -1,5 +1,6 @@
 from django.http import HttpRequest, JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, QuerySet
 from django.views import View
 from django.views.generic import TemplateView
@@ -7,11 +8,15 @@ from django.views.generic import TemplateView
 from core.models import Task
 
 
-class ClientLandingPageView(LoginRequiredMixin, TemplateView):
+class ClientLandingPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """Render the authenticated client's task management landing page."""
 
     template_name = "core/client_landing.html"
     login_url = "/accounts/login/"
+
+    def test_func(self) -> bool:
+        """Allow access only to users in the Client group."""
+        return self.request.user.groups.filter(name="Client").exists()
 
     def get_tasks(self) -> QuerySet[Task]:
         """Return only tasks owned by the authenticated client."""
