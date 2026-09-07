@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 from django.test import TestCase
 
 from core.models import Task
@@ -19,9 +20,11 @@ class ClientLandingPageTests(TestCase):
     """Verify authentication and client isolation on the landing page."""
 
     def setUp(self) -> None:
+        self.client_group = Group.objects.create(name="Client")
         self.client_user = User.objects.create_user(
             username="client@example.com", password="test-password"
         )
+        self.client_user.groups.add(self.client_group)
         self.other_user = User.objects.create_user(
             username="other@example.com", password="test-password"
         )
@@ -31,6 +34,24 @@ class ClientLandingPageTests(TestCase):
         response = self.client.get("/")
 
         self.assertRedirects(response, "/accounts/login/?next=/")
+
+    def test_authenticated_non_client_is_forbidden(self) -> None:
+        """An authenticated user outside the Client group is denied."""
+        self.client.force_login(self.other_user)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_status_does_not_grant_client_access(self) -> None:
+        """Staff status alone does not bypass the client boundary."""
+        self.other_user.is_staff = True
+        self.other_user.save(update_fields=["is_staff"])
+        self.client.force_login(self.other_user)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 403)
 
     def test_landing_page_shows_only_authenticated_client_tasks(self) -> None:
         """A client sees its own task summary and not another client's task."""

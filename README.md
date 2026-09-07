@@ -17,6 +17,24 @@ python manage.py migrate
 
 The settings module reads environment variables from the shell. Load `.env` with your preferred environment manager when needed; Django does not read `.env` files automatically.
 
+### Create a local client user
+
+Client access is granted through membership in the Django `Client` group. Create the group and assign a user with the Django shell:
+
+```bash
+python manage.py shell
+```
+
+```python
+from django.contrib.auth.models import Group, User
+
+client_group, _ = Group.objects.get_or_create(name="Client")
+user = User.objects.get(username="your-username")
+user.groups.add(client_group)
+```
+
+Membership in `Client` is required for the client landing page; staff status alone does not grant access.
+
 ## Run
 
 ```bash
