@@ -71,6 +71,10 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
 .login-panel form p { display: grid; gap: 8px; margin-bottom: 18px; font: 700 0.75rem/1.2 Arial, sans-serif; text-transform: uppercase; }
 .login-panel input { width: 100%; padding: 12px; border: 1px solid var(--line); font: 1rem Georgia, serif; }
 .primary-button--full { width: 100%; cursor: pointer; }
+.auth-switch { margin: 22px 0 0; color: var(--muted); font: 0.8rem/1.5 Arial, sans-serif; text-align: center; }
+.auth-switch a { color: var(--teal-dark); font-weight: 700; }
+.errorlist { margin: 6px 0 0; padding: 0; color: #9b4d16; font: 0.75rem/1.4 Arial, sans-serif; list-style: none; text-transform: none; }
+.helptext { display: block; margin-top: 6px; color: var(--muted); font: 0.7rem/1.4 Arial, sans-serif; text-transform: none; }
 
 @media (max-width: 700px) {
     .page-shell { padding: 0 18px 40px; }

@@ -3,9 +3,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, QuerySet
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import CreateView, TemplateView
 
+from core.forms import ClientRegistrationForm
 from core.models import Task
+
+
+class ClientRegistrationView(CreateView):
+    """Render and process the public client registration form."""
+
+    form_class = ClientRegistrationForm
+    template_name = "registration/register.html"
+    success_url = "/accounts/login/"
 
 
 class ClientLandingPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
