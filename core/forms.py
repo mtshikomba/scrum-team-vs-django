@@ -1,6 +1,9 @@
+from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
+
+from core.models import Task
 
 
 class ClientRegistrationForm(UserCreationForm):
@@ -17,3 +20,14 @@ class ClientRegistrationForm(UserCreationForm):
             client_group, _ = Group.objects.get_or_create(name="Client")
             user.groups.add(client_group)
         return user
+
+
+class TaskForm(forms.ModelForm):
+    """Validate client-editable task fields."""
+
+    class Meta:
+        model = Task
+        fields = ("title", "status", "priority", "due_date")
+        widgets = {
+            "due_date": forms.DateInput(attrs={"type": "date"}),
+        }

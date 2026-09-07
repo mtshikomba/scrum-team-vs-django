@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
+from django.test import Client as TestClient
 from django.test import TestCase
 
 from core.models import Task
@@ -169,3 +170,114 @@ class ClientLandingPageTests(TestCase):
         response = self.client.get("/")
 
         self.assertContains(response, "No tasks yet")
+
+
+class ClientTaskManagementTests(TestCase):
+    """Verify client-owned task CRUD and request protection."""
+
+    def setUp(self) -> None:
+        self.client_group = Group.objects.create(name="Client")
+        self.client_user = User.objects.create_user(
+            username="task-client@example.com", password="test-password"
+        )
+        self.client_user.groups.add(self.client_group)
+        self.other_user = User.objects.create_user(
+            username="task-other@example.com", password="test-password"
+        )
+        self.task = Task.objects.create(
+            client=self.client_user,
+            title="Review project brief",
+            status=Task.Status.OUTSTANDING,
+            priority=Task.Priority.MEDIUM,
+        )
+        self.client.force_login(self.client_user)
+
+    def test_client_can_create_task(self) -> None:
+        """A valid task is assigned to the authenticated client."""
+        response = self.client.post(
+            "/tasks/new/",
+            {
+                "title": "Prepare project notes",
+                "status": Task.Status.IN_PROGRESS,
+                "priority": Task.Priority.HIGH,
+                "due_date": "2026-10-01",
+            },
+        )
+
+        created_task = Task.objects.get(title="Prepare project notes")
+        self.assertRedirects(response, "/")
+        self.assertEqual(created_task.client, self.client_user)
+
+    def test_invalid_task_does_not_create_record(self) -> None:
+        """An invalid task form is shown without creating a task."""
+        response = self.client.post(
+            "/tasks/new/",
+            {"title": "", "status": "invalid", "priority": Task.Priority.HIGH},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required")
+        self.assertEqual(Task.objects.count(), 1)
+
+    def test_client_can_view_and_update_owned_task(self) -> None:
+        """An owner can view and update its task."""
+        detail_response = self.client.get(self.task.get_absolute_url())
+        update_response = self.client.post(
+            f"/tasks/{self.task.pk}/edit/",
+            {
+                "title": "Updated brief",
+                "status": Task.Status.COMPLETED,
+                "priority": Task.Priority.LOW,
+                "due_date": "",
+            },
+        )
+
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, self.task.title)
+        self.assertRedirects(update_response, self.task.get_absolute_url())
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.title, "Updated brief")
+        self.assertEqual(self.task.status, Task.Status.COMPLETED)
+
+    def test_client_can_delete_owned_task(self) -> None:
+        """An owner can confirm and delete its task."""
+        confirm_response = self.client.get(f"/tasks/{self.task.pk}/delete/")
+        delete_response = self.client.post(f"/tasks/{self.task.pk}/delete/", {})
+
+        self.assertEqual(confirm_response.status_code, 200)
+        self.assertContains(confirm_response, "Delete")
+        self.assertRedirects(delete_response, "/")
+        self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
+
+    def test_other_client_cannot_access_owned_task(self) -> None:
+        """Another client cannot read, update, or delete the task."""
+        self.task.client = self.other_user
+        self.task.save(update_fields=["client"])
+
+        for path in (
+            self.task.get_absolute_url(),
+            f"/tasks/{self.task.pk}/edit/",
+            f"/tasks/{self.task.pk}/delete/",
+        ):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 404)
+
+        response = self.client.post(
+            f"/tasks/{self.task.pk}/edit/",
+            {"title": "Attempted takeover", "status": Task.Status.COMPLETED},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Task.objects.filter(pk=self.task.pk).exists())
+
+    def test_task_mutations_require_csrf(self) -> None:
+        """State-changing task requests reject missing CSRF tokens."""
+        csrf_client = TestClient(enforce_csrf_checks=True)
+        csrf_client.force_login(self.client_user)
+
+        response = csrf_client.post(
+            "/tasks/new/",
+            {"title": "Missing token", "status": Task.Status.OUTSTANDING},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Task.objects.filter(title="Missing token").exists())
