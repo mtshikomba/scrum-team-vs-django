@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ task.title }} | Client tasks</title>
+    <link rel="stylesheet" href="{% static 'core/landing.css' %}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="topbar">
+            <a class="brand" href="{% url 'client-landing' %}"><span class="brand-mark">CT</span><span>Client tasks</span></a>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="text-button" type="submit">Sign out</button></form>
+        </header>
+        <main class="detail-panel">
+            <a class="back-link" href="{% url 'client-landing' %}">← Back to workspace</a>
+            <p class="eyebrow">Task detail</p>
+            <h1>{{ task.title }}</h1>
+            <div class="detail-grid">
+                <div><span class="detail-label">Status</span><span class="status status--{{ task.status }}">{{ task.get_status_display }}</span></div>
+                <div><span class="detail-label">Priority</span><span class="priority priority--{{ task.priority }}">{{ task.get_priority_display }}</span></div>
+                <div><span class="detail-label">Due date</span><span>{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}No due date{% endif %}</span></div>
+                <div><span class="detail-label">Last updated</span><span>{{ task.updated_at|date:"M j, Y" }}</span></div>
+            </div>
+            <div class="detail-actions">
+                <a class="primary-button" href="{% url 'task-update' task.pk %}">Edit task</a>
+                <a class="secondary-button" href="{% url 'task-delete' task.pk %}">Delete task</a>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

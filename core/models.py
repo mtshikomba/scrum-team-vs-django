@@ -62,3 +62,9 @@ class Task(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    def get_absolute_url(self) -> str:
+        """Return the client-facing detail URL for this task."""
+        from django.urls import reverse
+
+        return reverse("task-detail", kwargs={"pk": self.pk})

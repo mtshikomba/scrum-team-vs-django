@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Delete task | Client tasks</title>
+    <link rel="stylesheet" href="{% static 'core/landing.css' %}">
+</head>
+<body class="auth-page">
+    <main class="login-panel">
+        <a class="back-link" href="{{ task.get_absolute_url }}">← Keep task</a>
+        <p class="eyebrow">Delete task</p>
+        <h1>Delete “{{ task.title }}”?</h1>
+        <p class="form-note">This action cannot be undone.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button class="danger-button primary-button--full" type="submit">Delete task</button>
+        </form>
+    </main>
+</body>
+</html>

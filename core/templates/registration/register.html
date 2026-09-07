@@ -4,21 +4,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sign in | Client tasks</title>
+    <title>Create account | Client tasks</title>
     <link rel="stylesheet" href="{% static 'core/landing.css' %}">
 </head>
 <body class="auth-page">
     <main class="login-panel">
         <span class="brand-mark">CT</span>
         <p class="eyebrow">Client workspace</p>
-        <h1>Sign in to your tasks</h1>
+        <h1>Create your account</h1>
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <button class="primary-button primary-button--full" type="submit">Sign in</button>
-            <input type="hidden" name="next" value="{{ next }}">
+            <button class="primary-button primary-button--full" type="submit">Create account</button>
         </form>
-        <p class="auth-switch">New to the workspace? <a href="{% url 'register' %}">Create an account</a></p>
+        <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
     </main>
 </body>
 </html>

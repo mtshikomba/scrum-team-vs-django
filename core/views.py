@@ -2,21 +2,42 @@ from django.http import HttpRequest, JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, QuerySet
+from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    TemplateView,
+    UpdateView,
+)
 
+from core.forms import ClientRegistrationForm, TaskForm
 from core.models import Task
 
 
-class ClientLandingPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """Render the authenticated client's task management landing page."""
+class ClientAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Restrict a view to authenticated users in the Client group."""
 
-    template_name = "core/client_landing.html"
     login_url = "/accounts/login/"
 
     def test_func(self) -> bool:
-        """Allow access only to users in the Client group."""
+        """Return whether the current user has client access."""
         return self.request.user.groups.filter(name="Client").exists()
+
+
+class ClientRegistrationView(CreateView):
+    """Render and process the public client registration form."""
+
+    form_class = ClientRegistrationForm
+    template_name = "registration/register.html"
+    success_url = "/accounts/login/"
+
+
+class ClientLandingPageView(ClientAccessMixin, TemplateView):
+    """Render the authenticated client's task management landing page."""
+
+    template_name = "core/client_landing.html"
 
     def get_tasks(self) -> QuerySet[Task]:
         """Return only tasks owned by the authenticated client."""
@@ -39,6 +60,55 @@ class ClientLandingPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
             }
         )
         return context
+
+
+class ClientTaskCreateView(ClientAccessMixin, CreateView):
+    """Create a task owned by the authenticated client."""
+
+    model = Task
+    form_class = TaskForm
+    template_name = "core/task_form.html"
+    success_url = reverse_lazy("client-landing")
+
+    def form_valid(self, form: TaskForm):
+        """Set task ownership from the authenticated user, never form data."""
+        form.instance.client = self.request.user
+        return super().form_valid(form)
+
+
+class ClientTaskQuerysetMixin(ClientAccessMixin):
+    """Limit task detail, update, and delete operations to task owners."""
+
+    def get_queryset(self) -> QuerySet[Task]:
+        """Return only tasks owned by the authenticated client."""
+        return Task.objects.filter(client=self.request.user)
+
+
+class ClientTaskDetailView(ClientTaskQuerysetMixin, DetailView):
+    """Display one task owned by the authenticated client."""
+
+    model = Task
+    template_name = "core/task_detail.html"
+
+
+class ClientTaskUpdateView(ClientTaskQuerysetMixin, UpdateView):
+    """Update one task owned by the authenticated client."""
+
+    model = Task
+    form_class = TaskForm
+    template_name = "core/task_form.html"
+
+    def get_success_url(self) -> str:
+        """Return the updated task detail route."""
+        return self.object.get_absolute_url()
+
+
+class ClientTaskDeleteView(ClientTaskQuerysetMixin, DeleteView):
+    """Delete one task owned by the authenticated client."""
+
+    model = Task
+    template_name = "core/task_confirm_delete.html"
+    success_url = reverse_lazy("client-landing")
 
 
 class HealthCheckView(View):
