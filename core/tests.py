@@ -385,3 +385,19 @@ class ClientProjectManagementTests(TestCase):
         response = self.client.get("/tasks/new/")
 
         self.assertRedirects(response, "/projects/new/")
+
+    def test_anonymous_task_creation_redirects_to_login(self) -> None:
+        """Anonymous users follow the login flow instead of raising an error."""
+        self.client.logout()
+
+        response = self.client.get("/tasks/new/")
+
+        self.assertRedirects(response, "/accounts/login/?next=/tasks/new/")
+
+    def test_non_client_task_creation_is_forbidden(self) -> None:
+        """Authenticated users outside Client cannot create tasks."""
+        self.client.force_login(self.other_user)
+
+        response = self.client.get("/tasks/new/")
+
+        self.assertEqual(response.status_code, 403)
