@@ -80,7 +80,9 @@ These conventions apply to every future task in this workspace.
 
 * **Task IDs:** Use three-digit sequential IDs in the format `task-NNN`. Never reuse an ID.
 * **Ticket files:** Store tickets as `.tasks/{status}/task-NNN-{kebab-case-summary}.md`, where `{status}` is `todo`, `in-progress`, or `done`.
-* **Task lifecycle:** Preserve the same filename and task ID when moving a ticket from `.tasks/todo/` to `.tasks/in-progress/` and then to `.tasks/done/`.
+* **Task lifecycle:** Move, do not copy, the same filename and task ID from `.tasks/todo/` to `.tasks/in-progress/` and then to `.tasks/done/`.
+* **Single canonical copy:** A ticket must exist in exactly one lifecycle folder at a time. Before starting or completing work, check for duplicate copies and remove stale lifecycle copies after a successful move.
+* **Lifecycle verification:** After every ticket move, verify the source path is absent and the destination path exists. Never recreate a completed ticket in `.tasks/in-progress/`.
 * **Feature branches:** Use `task-NNN/{kebab-case-summary}`.
 * **Pull request titles:** Use `[task-NNN] Imperative summary`.
 * **Pull request bodies:** Include the ticket ID, implementation summary, acceptance-criteria status, tests and validation, and migration notes when applicable.
