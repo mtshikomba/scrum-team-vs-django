@@ -17,6 +17,7 @@
             <a class="back-link" href="{% url 'client-landing' %}">← Back to workspace</a>
             <p class="eyebrow">Task detail</p>
             <h1>{{ task.title }}</h1>
+            {% if task.description %}<section class="task-description" aria-label="Task description">{{ task.get_safe_description|safe }}</section>{% else %}<p class="form-note">No description added yet.</p>{% endif %}
             <div class="detail-grid">
                 <div><span class="detail-label">Status</span><span class="status status--{{ task.status }}">{{ task.get_status_display }}</span></div>
                 <div><span class="detail-label">Priority</span><span class="priority priority--{{ task.priority }}">{{ task.get_priority_display }}</span></div>

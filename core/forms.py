@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 
 from core.models import Project, Task
+from core.sanitization import clean_rich_text
 
 
 class ClientRegistrationForm(UserCreationForm):
@@ -27,7 +28,7 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ("project", "title", "status", "priority", "due_date")
+        fields = ("project", "title", "description", "status", "priority", "due_date")
         widgets = {
             "due_date": forms.DateInput(attrs={"type": "date"}),
         }
@@ -35,6 +36,10 @@ class TaskForm(forms.ModelForm):
     def __init__(self, *args: object, client: User, **kwargs: object) -> None:
         super().__init__(*args, **kwargs)
         self.fields["project"].queryset = Project.objects.filter(client=client)
+
+    def clean_description(self) -> str:
+        """Sanitize rich-text content before saving it."""
+        return clean_rich_text(self.cleaned_data.get("description", ""))
 
 
 class ProjectForm(forms.ModelForm):

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% if object %}Edit task{% else %}New task{% endif %} | Client tasks</title>
     <link rel="stylesheet" href="{% static 'core/landing.css' %}">
+    {{ form.media }}
 </head>
 <body class="auth-page">
     <main class="login-panel task-form-panel">
