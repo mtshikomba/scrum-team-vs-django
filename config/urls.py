@@ -26,6 +26,8 @@ from core.views import (
     ClientProjectDetailView,
     ClientProjectListView,
     ClientProjectUpdateView,
+    ClientProfileView,
+    ClientPasswordChangeView,
     ClientTaskCreateView,
     ClientTaskDeleteView,
     ClientTaskDetailView,
@@ -36,6 +38,12 @@ from core.views import (
 urlpatterns = [
     path("", ClientLandingPageView.as_view(), name="client-landing"),
     path("accounts/register/", ClientRegistrationView.as_view(), name="register"),
+    path("profile/", ClientProfileView.as_view(), name="profile"),
+    path(
+        "profile/password/",
+        ClientPasswordChangeView.as_view(),
+        name="password-change",
+    ),
     path("accounts/", include("django.contrib.auth.urls")),
     path("projects/", ClientProjectListView.as_view(), name="project-list"),
     path("projects/new/", ClientProjectCreateView.as_view(), name="project-create"),

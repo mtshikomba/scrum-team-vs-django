@@ -57,3 +57,11 @@ class ProjectForm(forms.ModelForm):
         if duplicate_projects.exists():
             raise forms.ValidationError("You already have a project with this name.")
         return name
+
+
+class ClientProfileForm(forms.ModelForm):
+    """Validate personal fields a client may update on their profile."""
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "email")

@@ -1,0 +1,6 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Profile | Client tasks</title><link rel="stylesheet" href="{% static 'core/landing.css' %}"></head>
+<body class="auth-page"><main class="login-panel task-form-panel"><a class="back-link" href="{% url 'client-landing' %}">← Back to workspace</a><p class="eyebrow">Account</p><h1>Your profile</h1><p class="form-note">Username: {{ user.username }}</p><form method="post">{% csrf_token %}{{ form.as_p }}<button class="primary-button primary-button--full" type="submit">Save profile</button></form><p class="auth-switch"><a href="{% url 'password-change' %}">Change password</a></p></main></body>
+</html>
