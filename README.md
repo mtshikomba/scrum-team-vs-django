@@ -4,7 +4,7 @@ Minimal Django project scaffold for local development.
 
 ## Agent Workflow
 
-This project uses three agents to move work from an idea to reviewed code:
+This project uses four agents to move work from an idea to reviewed code:
 
 ### `@product-owner`
 
@@ -14,6 +14,10 @@ Turns a loose request into a groomed Markdown ticket. The ticket should include 
 
 Implements an approved ticket, writes the required Django tests, and validates the change. The developer moves the ticket through the task lifecycle and prepares the feature branch and pull request.
 
+### `@ux-developer`
+
+Translates approved requirements into user flows, screen and component states, responsive behavior, accessible interactions, and user-facing copy. The UX developer reviews user-facing implementations in a browser at desktop and mobile widths before technical review.
+
 ### `@tech-lead`
 
 Reviews the pull request after it is created. The review checks architecture, authorization, CSRF/XSS risks, query performance, migrations, tests, and adherence to the acceptance criteria before merge.
@@ -22,11 +26,13 @@ Reviews the pull request after it is created. The review checks architecture, au
 
 1. Ask `@product-owner` to run `#groom-ticket` for the feature request.
 2. Review the generated ticket and reply **Approve** or **Refine**.
-3. After approval, ask `@developer` to implement the ticket. The ticket moves from `.tasks/todo/` to `.tasks/in-progress/`.
-4. The developer writes tests first where practical, implements the smallest complete change, and runs the project checks.
-5. The developer moves the completed ticket to `.tasks/done/`, pushes the feature branch, and creates a pull request into `main`.
-6. Ask `@tech-lead` to review the pull request and address any findings.
-7. Merge only after the tech-lead review passes and the Definition of Done checks are green.
+3. For user-facing work, ask `@ux-developer` to define the UX specification and acceptance criteria.
+4. Ask `@developer` to implement the approved ticket and UX handoff. The ticket moves from `.tasks/todo/` to `.tasks/in-progress/`.
+5. The developer writes tests first where practical, implements the smallest complete change, and runs the project checks.
+6. Ask `@ux-developer` to validate the implemented UI at desktop and mobile widths.
+7. The developer moves the completed ticket to `.tasks/done/`, pushes the feature branch, and creates a pull request into `main`.
+8. Ask `@tech-lead` to review the pull request and address any findings.
+9. Merge only after UX validation, tech-lead review, and the Definition of Done checks are green.
 
 ## Task and Git Conventions
 
@@ -62,6 +68,7 @@ Before a ticket is complete:
 - New models and views have concise Google-style docstrings.
 - A migration is generated and included when models change.
 - Acceptance criteria are checked off in the completed ticket.
+- User-facing changes pass UX validation for responsive layout, accessibility, and relevant UI states.
 
 ## Example Prompts
 
@@ -87,6 +94,18 @@ Review a pull request:
 
 ```text
 @tech-lead review PR #123.
+```
+
+Define UX before implementation:
+
+```text
+@ux-developer define the UX specification for task-012, including user flow, states, responsive behavior, accessibility, and browser validation.
+```
+
+Validate implemented UI:
+
+```text
+@ux-developer review the implemented UI for task-012 at desktop and mobile widths.
 ```
 
 ## Setup

@@ -21,6 +21,7 @@ Before any task is considered complete, it must: 
 2. Include unit/integration tests using django.test.TestCase or pytest-django.
 3. Contain updated docstrings (Google style) explaining the purpose of new models/views.
 4. Have a clean database migration file generated via makemigrations.
+5. For user-facing changes, include UX acceptance criteria and browser validation at desktop and mobile widths.
 
 ### 🕵️‍♂️ 2. Team Personas (The Agents)
 
@@ -40,6 +41,12 @@ Before any task is considered complete, it must: 
 
 * **Role:** Feature engineer and test author.
 * **Context:** Focuses on writing functional, clean Django models, views, forms, and tests based on the criteria approved by @product-owner.
+
+### @ux-developer
+
+* **Role:** User-experience and frontend implementation specialist.
+* **Context:** Translates approved product requirements into user flows, screen/component states, responsive behavior, accessible interactions, content, and UX acceptance criteria. Reviews the implemented UI in a browser at desktop and mobile widths.
+* **Guardrail:** Does not change backend authorization, domain rules, or data contracts without an approved ticket update.
 
 ### 📋 3. Repeatable Workflows (The Skills)
 
@@ -65,7 +72,19 @@ Before any task is considered complete, it must: 
   6. Repeat step 4 and 5 until the console outputs `OK`.
   7. Run `python manage.py makemigrations` if models were modified.
 
-### 🔍 Skill C: Architecture & Code Review (#review-pr)
+### 🎨 Skill C: UX Specification & Validation (#ux-review)
+
+* **Trigger:** Activated after a ticket is approved and before or alongside implementation of a user-facing change.
+* **Steps:**
+
+  1. @ux-developer reviews the approved ticket and existing interface patterns.
+  2. Defines the primary user flow, screen/component states, responsive behavior, accessibility requirements, and user-facing copy.
+  3. Adds UX acceptance criteria to the implementation handoff.
+  4. Reviews the implemented UI in a browser at desktop and mobile widths.
+  5. Checks loading, empty, error, success, permission-denied, keyboard, focus, and overflow behavior where applicable.
+  6. Reports UX findings for correction before final technical review.
+
+### 🔍 Skill D: Architecture & Code Review (#review-pr)
 
 * **Trigger:** Run before merging code or finalizing a feature.
 * **Steps:** 
