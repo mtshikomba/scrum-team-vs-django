@@ -2,6 +2,58 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class Project(models.Model):
+    """A project owned by a client and containing the client's tasks."""
+
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="client_projects",
+        verbose_name="client",
+        help_text="The client user who owns this project.",
+        db_index=True,
+    )
+    name = models.CharField(
+        max_length=200,
+        verbose_name="name",
+        help_text="A name that identifies the project.",
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name="description",
+        help_text="Optional context about the project.",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="created at",
+        help_text="When the project was created.",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="updated at",
+        help_text="When the project was last changed.",
+    )
+
+    class Meta:
+        ordering = ("-updated_at", "name")
+        verbose_name = "project"
+        verbose_name_plural = "projects"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("client", "name"), name="unique_project_name_per_client"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_absolute_url(self) -> str:
+        """Return the client-facing detail URL for this project."""
+        from django.urls import reverse
+
+        return reverse("project-detail", kwargs={"pk": self.pk})
+
+
 class Task(models.Model):
     """A task owned by a client user."""
 
@@ -21,6 +73,14 @@ class Task(models.Model):
         related_name="client_tasks",
         verbose_name="client",
         help_text="The client user who owns this task.",
+        db_index=True,
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="tasks",
+        verbose_name="project",
+        help_text="The project containing this task.",
         db_index=True,
     )
     title = models.CharField(

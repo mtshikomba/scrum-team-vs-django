@@ -9,7 +9,7 @@
 </head>
 <body class="auth-page">
     <main class="login-panel task-form-panel">
-        <a class="back-link" href="{% url 'client-landing' %}">← Back to workspace</a>
+        <a class="back-link" href="{% url 'project-list' %}">← Back to projects</a>
         <p class="eyebrow">Client workspace</p>
         <h1>{% if object %}Edit task{% else %}Create a task{% endif %}</h1>
         <form method="post">

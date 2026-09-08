@@ -120,6 +120,10 @@ user.groups.add(client_group)
 
 Membership in `Client` is required for the client landing page; staff status alone does not grant access.
 
+### Project-first task workflow
+
+Clients create a project before creating tasks. From the client workspace, choose **New project**, add the project name and optional description, then open the project and choose **New task**. Every task belongs to one project, and clients can only view or change projects and tasks they own.
+
 ## Run
 
 ```bash

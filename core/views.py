@@ -2,6 +2,7 @@ from django.http import HttpRequest, JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, QuerySet
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import (
@@ -12,8 +13,8 @@ from django.views.generic import (
     UpdateView,
 )
 
-from core.forms import ClientRegistrationForm, TaskForm
-from core.models import Task
+from core.forms import ClientRegistrationForm, ProjectForm, TaskForm
+from core.models import Project, Task
 
 
 class ClientAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -39,6 +40,12 @@ class ClientLandingPageView(ClientAccessMixin, TemplateView):
 
     template_name = "core/client_landing.html"
 
+    def get_projects(self) -> QuerySet[Project]:
+        """Return only projects owned by the authenticated client."""
+        return Project.objects.filter(client=self.request.user).annotate(
+            task_count=Count("tasks")
+        )
+
     def get_tasks(self) -> QuerySet[Task]:
         """Return only tasks owned by the authenticated client."""
         return Task.objects.filter(client=self.request.user)
@@ -51,6 +58,7 @@ class ClientLandingPageView(ClientAccessMixin, TemplateView):
         counts = {item["status"]: item["total"] for item in status_counts}
         context.update(
             {
+                "projects": self.get_projects(),
                 "tasks": tasks,
                 "task_counts": {
                     "outstanding": counts.get(Task.Status.OUTSTANDING, 0),
@@ -69,6 +77,18 @@ class ClientTaskCreateView(ClientAccessMixin, CreateView):
     form_class = TaskForm
     template_name = "core/task_form.html"
     success_url = reverse_lazy("client-landing")
+
+    def dispatch(self, request: HttpRequest, *args: object, **kwargs: object):
+        """Send clients to project creation until they have a project."""
+        if not Project.objects.filter(client=request.user).exists():
+            return redirect("project-create")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self) -> dict[str, object]:
+        """Limit selectable projects to those owned by the client."""
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.request.user
+        return kwargs
 
     def form_valid(self, form: TaskForm):
         """Set task ownership from the authenticated user, never form data."""
@@ -98,6 +118,12 @@ class ClientTaskUpdateView(ClientTaskQuerysetMixin, UpdateView):
     form_class = TaskForm
     template_name = "core/task_form.html"
 
+    def get_form_kwargs(self) -> dict[str, object]:
+        """Limit selectable projects to those owned by the client."""
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.request.user
+        return kwargs
+
     def get_success_url(self) -> str:
         """Return the updated task detail route."""
         return self.object.get_absolute_url()
@@ -109,6 +135,76 @@ class ClientTaskDeleteView(ClientTaskQuerysetMixin, DeleteView):
     model = Task
     template_name = "core/task_confirm_delete.html"
     success_url = reverse_lazy("client-landing")
+
+
+class ClientProjectQuerysetMixin(ClientAccessMixin):
+    """Limit project views to projects owned by the authenticated client."""
+
+    def get_queryset(self) -> QuerySet[Project]:
+        """Return only projects owned by the authenticated client."""
+        return Project.objects.filter(client=self.request.user).annotate(
+            task_count=Count("tasks")
+        )
+
+
+class ClientProjectListView(ClientProjectQuerysetMixin, TemplateView):
+    """Display the authenticated client's projects."""
+
+    template_name = "core/project_list.html"
+
+    def get_context_data(self, **kwargs: object) -> dict[str, object]:
+        """Add the client's projects to the page context."""
+        context = super().get_context_data(**kwargs)
+        context["projects"] = self.get_queryset()
+        return context
+
+
+class ClientProjectCreateView(ClientAccessMixin, CreateView):
+    """Create a project owned by the authenticated client."""
+
+    model = Project
+    form_class = ProjectForm
+    template_name = "core/project_form.html"
+
+    def get_form_kwargs(self) -> dict[str, object]:
+        """Pass the authenticated client to project validation."""
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        """Set project ownership from the authenticated user."""
+        form.instance.client = self.request.user
+        return super().form_valid(form)
+
+
+class ClientProjectDetailView(ClientProjectQuerysetMixin, DetailView):
+    """Display one project and its owned tasks."""
+
+    model = Project
+    template_name = "core/project_detail.html"
+
+
+class ClientProjectUpdateView(ClientProjectQuerysetMixin, UpdateView):
+    """Update a project owned by the authenticated client."""
+
+    model = Project
+    form_class = ProjectForm
+    template_name = "core/project_form.html"
+
+    def get_form_kwargs(self) -> dict[str, object]:
+        """Pass the authenticated client to project validation."""
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.request.user
+        return kwargs
+
+
+class ClientProjectDeleteView(ClientProjectQuerysetMixin, DeleteView):
+    """Delete a project owned by the authenticated client."""
+
+    model = Project
+    template_name = "core/project_confirm_delete.html"
+    success_url = reverse_lazy("project-list")
 
 
 class HealthCheckView(View):

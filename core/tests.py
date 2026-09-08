@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.test import Client as TestClient
 from django.test import TestCase
 
-from core.models import Task
+from core.models import Project, Task
 
 
 class HealthCheckViewTests(TestCase):
@@ -108,8 +108,14 @@ class ClientLandingPageTests(TestCase):
             username="client@example.com", password="test-password"
         )
         self.client_user.groups.add(self.client_group)
+        self.project = Project.objects.create(
+            client=self.client_user, name="Client project"
+        )
         self.other_user = User.objects.create_user(
             username="other@example.com", password="test-password"
+        )
+        self.other_project = Project.objects.create(
+            client=self.other_user, name="Other project"
         )
 
     def test_anonymous_users_are_redirected_to_login(self) -> None:
@@ -149,11 +155,16 @@ class ClientLandingPageTests(TestCase):
         """A client sees its own task summary and not another client's task."""
         own_task = Task.objects.create(
             client=self.client_user,
+            project=self.project,
             title="Review project brief",
             status=Task.Status.IN_PROGRESS,
             priority=Task.Priority.HIGH,
         )
-        Task.objects.create(client=self.other_user, title="Private task")
+        Task.objects.create(
+            client=self.other_user,
+            project=self.other_project,
+            title="Private task",
+        )
         self.client.force_login(self.client_user)
 
         response = self.client.get("/")
@@ -181,11 +192,15 @@ class ClientTaskManagementTests(TestCase):
             username="task-client@example.com", password="test-password"
         )
         self.client_user.groups.add(self.client_group)
+        self.project = Project.objects.create(
+            client=self.client_user, name="Task project"
+        )
         self.other_user = User.objects.create_user(
             username="task-other@example.com", password="test-password"
         )
         self.task = Task.objects.create(
             client=self.client_user,
+            project=self.project,
             title="Review project brief",
             status=Task.Status.OUTSTANDING,
             priority=Task.Priority.MEDIUM,
@@ -198,6 +213,7 @@ class ClientTaskManagementTests(TestCase):
             "/tasks/new/",
             {
                 "title": "Prepare project notes",
+                "project": self.project.pk,
                 "status": Task.Status.IN_PROGRESS,
                 "priority": Task.Priority.HIGH,
                 "due_date": "2026-10-01",
@@ -212,7 +228,12 @@ class ClientTaskManagementTests(TestCase):
         """An invalid task form is shown without creating a task."""
         response = self.client.post(
             "/tasks/new/",
-            {"title": "", "status": "invalid", "priority": Task.Priority.HIGH},
+            {
+                "title": "",
+                "project": self.project.pk,
+                "status": "invalid",
+                "priority": Task.Priority.HIGH,
+            },
         )
 
         self.assertEqual(response.status_code, 200)
@@ -226,6 +247,7 @@ class ClientTaskManagementTests(TestCase):
             f"/tasks/{self.task.pk}/edit/",
             {
                 "title": "Updated brief",
+                "project": self.project.pk,
                 "status": Task.Status.COMPLETED,
                 "priority": Task.Priority.LOW,
                 "due_date": "",
@@ -276,8 +298,90 @@ class ClientTaskManagementTests(TestCase):
 
         response = csrf_client.post(
             "/tasks/new/",
-            {"title": "Missing token", "status": Task.Status.OUTSTANDING},
+            {
+                "title": "Missing token",
+                "project": self.project.pk,
+                "status": Task.Status.OUTSTANDING,
+            },
         )
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(Task.objects.filter(title="Missing token").exists())
+
+
+class ClientProjectManagementTests(TestCase):
+    """Verify project ownership and project-first task creation."""
+
+    def setUp(self) -> None:
+        self.client_group = Group.objects.create(name="Client")
+        self.client_user = User.objects.create_user(
+            username="project-client@example.com", password="test-password"
+        )
+        self.client_user.groups.add(self.client_group)
+        self.other_user = User.objects.create_user(
+            username="project-other@example.com", password="test-password"
+        )
+        self.other_project = Project.objects.create(
+            client=self.other_user, name="Private project"
+        )
+        self.client.force_login(self.client_user)
+
+    def test_client_can_create_and_view_project(self) -> None:
+        """A client can create a project and see it in the project list."""
+        response = self.client.post(
+            "/projects/new/",
+            {"name": "Website refresh", "description": "Public site work"},
+        )
+
+        project = Project.objects.get(name="Website refresh")
+        self.assertRedirects(response, project.get_absolute_url())
+        self.assertContains(self.client.get("/projects/"), project.name)
+
+    def test_project_name_is_unique_per_client(self) -> None:
+        """A client cannot create duplicate project names."""
+        Project.objects.create(client=self.client_user, name="Website refresh")
+
+        response = self.client.post(
+            "/projects/new/", {"name": "Website refresh", "description": "Again"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Project.objects.filter(
+                client=self.client_user, name="Website refresh"
+            ).count(),
+            1,
+        )
+
+    def test_client_cannot_access_other_clients_project(self) -> None:
+        """Project detail, edit, and delete are owner-scoped."""
+        for path in (
+            self.other_project.get_absolute_url(),
+            f"/projects/{self.other_project.pk}/edit/",
+            f"/projects/{self.other_project.pk}/delete/",
+        ):
+            self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_task_creation_requires_a_project(self) -> None:
+        """A client must choose a project before a task can be created."""
+        Project.objects.create(client=self.client_user, name="Available project")
+        response = self.client.post(
+            "/tasks/new/",
+            {
+                "title": "Unassigned task",
+                "status": Task.Status.OUTSTANDING,
+                "priority": Task.Priority.MEDIUM,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required")
+        self.assertFalse(Task.objects.filter(title="Unassigned task").exists())
+
+    def test_task_creation_redirects_when_client_has_no_projects(self) -> None:
+        """A client must create a project before opening task creation."""
+        self.client_user.client_projects.all().delete()
+
+        response = self.client.get("/tasks/new/")
+
+        self.assertRedirects(response, "/projects/new/")

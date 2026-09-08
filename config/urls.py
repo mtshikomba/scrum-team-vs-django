@@ -21,6 +21,11 @@ from django.urls import include, path
 from core.views import (
     ClientLandingPageView,
     ClientRegistrationView,
+    ClientProjectCreateView,
+    ClientProjectDeleteView,
+    ClientProjectDetailView,
+    ClientProjectListView,
+    ClientProjectUpdateView,
     ClientTaskCreateView,
     ClientTaskDeleteView,
     ClientTaskDetailView,
@@ -32,6 +37,21 @@ urlpatterns = [
     path("", ClientLandingPageView.as_view(), name="client-landing"),
     path("accounts/register/", ClientRegistrationView.as_view(), name="register"),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("projects/", ClientProjectListView.as_view(), name="project-list"),
+    path("projects/new/", ClientProjectCreateView.as_view(), name="project-create"),
+    path(
+        "projects/<int:pk>/", ClientProjectDetailView.as_view(), name="project-detail"
+    ),
+    path(
+        "projects/<int:pk>/edit/",
+        ClientProjectUpdateView.as_view(),
+        name="project-update",
+    ),
+    path(
+        "projects/<int:pk>/delete/",
+        ClientProjectDeleteView.as_view(),
+        name="project-delete",
+    ),
     path("tasks/new/", ClientTaskCreateView.as_view(), name="task-create"),
     path("tasks/<int:pk>/", ClientTaskDetailView.as_view(), name="task-detail"),
     path("tasks/<int:pk>/edit/", ClientTaskUpdateView.as_view(), name="task-update"),

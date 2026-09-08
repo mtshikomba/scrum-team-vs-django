@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 
-from core.models import Task
+from core.models import Project, Task
 
 
 class ClientRegistrationForm(UserCreationForm):
@@ -27,7 +27,33 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ("title", "status", "priority", "due_date")
+        fields = ("project", "title", "status", "priority", "due_date")
         widgets = {
             "due_date": forms.DateInput(attrs={"type": "date"}),
         }
+
+    def __init__(self, *args: object, client: User, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["project"].queryset = Project.objects.filter(client=client)
+
+
+class ProjectForm(forms.ModelForm):
+    """Validate project names for the authenticated client."""
+
+    class Meta:
+        model = Project
+        fields = ("name", "description")
+
+    def __init__(self, *args: object, client: User, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self.client_user = client
+
+    def clean_name(self) -> str:
+        """Reject duplicate project names for the current client."""
+        name = self.cleaned_data["name"]
+        duplicate_projects = Project.objects.filter(client=self.client_user, name=name)
+        if self.instance.pk:
+            duplicate_projects = duplicate_projects.exclude(pk=self.instance.pk)
+        if duplicate_projects.exists():
+            raise forms.ValidationError("You already have a project with this name.")
+        return name
