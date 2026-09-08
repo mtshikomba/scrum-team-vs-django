@@ -40,6 +40,8 @@ Use one task ID across the ticket, branch, and pull request:
 
 Use three-digit sequential IDs that are never reused. Keep summaries concise, lowercase ASCII, and kebab-case. Preserve the same ticket filename while moving it between lifecycle folders.
 
+Each ticket must have exactly one canonical copy. Agents must move the file rather than copy or recreate it, then verify that the source is absent and the destination exists. Before starting work, check all three lifecycle folders for duplicates; after completing work, remove any stale `todo` or `in-progress` copy so only the current status remains.
+
 Example:
 
 ```text
