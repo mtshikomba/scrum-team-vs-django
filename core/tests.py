@@ -17,6 +17,97 @@ class HealthCheckViewTests(TestCase):
         self.assertJSONEqual(response.content, {"status": "ok"})
 
 
+class ClientProfileTests(TestCase):
+    """Verify client profile access and privilege boundaries."""
+
+    def setUp(self) -> None:
+        self.client_group = Group.objects.create(name="Client")
+        self.user = User.objects.create_user(
+            username="profile-client", password="old-password"
+        )
+        self.user.groups.add(self.client_group)
+        self.other_user = User.objects.create_user(
+            username="profile-other", password="other-password"
+        )
+        self.client.force_login(self.user)
+
+    def test_client_can_update_personal_profile_fields(self) -> None:
+        """A client can save approved personal fields."""
+        response = self.client.post(
+            "/profile/",
+            {
+                "first_name": "Ada",
+                "last_name": "Lovelace",
+                "email": "ada@example.com",
+            },
+        )
+
+        self.assertRedirects(response, "/profile/")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Ada")
+        self.assertEqual(self.user.last_name, "Lovelace")
+        self.assertEqual(self.user.email, "ada@example.com")
+
+    def test_profile_payload_cannot_change_authorization(self) -> None:
+        """Unauthorized user fields are ignored by the profile form."""
+        self.client.post(
+            "/profile/",
+            {
+                "first_name": "Safe",
+                "username": "hijacked",
+                "is_staff": "on",
+                "is_superuser": "on",
+                "groups": [self.client_group.pk],
+            },
+        )
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "profile-client")
+        self.assertFalse(self.user.is_staff)
+        self.assertFalse(self.user.is_superuser)
+        self.assertTrue(self.user.groups.filter(name="Client").exists())
+
+    def test_anonymous_and_non_client_profile_access_is_denied(self) -> None:
+        """Only client users can access profile pages."""
+        self.client.logout()
+        self.assertRedirects(
+            self.client.get("/profile/"), "/accounts/login/?next=/profile/"
+        )
+        self.client.force_login(self.other_user)
+        self.assertEqual(self.client.get("/profile/").status_code, 403)
+
+    def test_password_change_requires_current_password(self) -> None:
+        """Password changes use Django validation and invalidate old credentials."""
+        response = self.client.post(
+            "/profile/password/",
+            {
+                "old_password": "old-password",
+                "new_password1": "new-secure-password",
+                "new_password2": "new-secure-password",
+            },
+        )
+
+        self.assertRedirects(response, "/profile/")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("new-secure-password"))
+        self.assertFalse(self.user.check_password("old-password"))
+
+    def test_password_change_rejects_wrong_current_password(self) -> None:
+        """An incorrect current password leaves the account unchanged."""
+        response = self.client.post(
+            "/profile/password/",
+            {
+                "old_password": "wrong-password",
+                "new_password1": "new-secure-password",
+                "new_password2": "new-secure-password",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("old-password"))
+
+
 class ClientRegistrationTests(TestCase):
     """Verify secure registration and automatic client authorization."""
 

@@ -1,4 +1,5 @@
 from django.http import HttpRequest, JsonResponse
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, QuerySet
@@ -12,8 +13,11 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from django.contrib.auth.views import PasswordChangeView
 
-from core.forms import ClientRegistrationForm, ProjectForm, TaskForm
+from core.forms import ClientProfileForm, ClientRegistrationForm, ProjectForm, TaskForm
+from django.contrib.auth.models import User
+
 from core.models import Project, Task
 
 
@@ -33,6 +37,32 @@ class ClientRegistrationView(CreateView):
     form_class = ClientRegistrationForm
     template_name = "registration/register.html"
     success_url = "/accounts/login/"
+
+
+class ClientProfileView(ClientAccessMixin, UpdateView):
+    """Update personal fields for the authenticated client."""
+
+    form_class = ClientProfileForm
+    template_name = "core/profile.html"
+    success_url = reverse_lazy("profile")
+
+    def get_object(self, queryset=None) -> User:
+        """Return only the currently authenticated user."""
+        return self.request.user
+
+
+class ClientPasswordChangeView(ClientAccessMixin, PasswordChangeView):
+    """Change the password for the authenticated client."""
+
+    form_class = PasswordChangeForm
+    template_name = "core/password_change.html"
+    success_url = reverse_lazy("profile")
+
+    def get_form_kwargs(self) -> dict[str, object]:
+        """Bind the password form to the authenticated user."""
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class ClientLandingPageView(ClientAccessMixin, TemplateView):
