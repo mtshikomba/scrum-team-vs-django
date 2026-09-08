@@ -80,6 +80,8 @@ class ClientTaskCreateView(ClientAccessMixin, CreateView):
 
     def dispatch(self, request: HttpRequest, *args: object, **kwargs: object):
         """Send clients to project creation until they have a project."""
+        if not request.user.is_authenticated or not self.test_func():
+            return super().dispatch(request, *args, **kwargs)
         if not Project.objects.filter(client=request.user).exists():
             return redirect("project-create")
         return super().dispatch(request, *args, **kwargs)
