@@ -1,5 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django_ckeditor_5.fields import CKEditor5Field
+
+from core.sanitization import clean_rich_text
 
 
 class Project(models.Model):
@@ -88,6 +91,12 @@ class Task(models.Model):
         verbose_name="title",
         help_text="A short description of the task.",
     )
+    description = CKEditor5Field(
+        blank=True,
+        config_name="default",
+        verbose_name="description",
+        help_text="Rich-text context and notes for the task.",
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -128,3 +137,7 @@ class Task(models.Model):
         from django.urls import reverse
 
         return reverse("task-detail", kwargs={"pk": self.pk})
+
+    def get_safe_description(self) -> str:
+        """Return the task description with unsafe markup removed."""
+        return clean_rich_text(self.description)

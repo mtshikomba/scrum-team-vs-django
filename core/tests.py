@@ -304,6 +304,7 @@ class ClientTaskManagementTests(TestCase):
             "/tasks/new/",
             {
                 "title": "Prepare project notes",
+                "description": "<p>Important <strong>project</strong> notes.</p>",
                 "project": self.project.pk,
                 "status": Task.Status.IN_PROGRESS,
                 "priority": Task.Priority.HIGH,
@@ -314,6 +315,37 @@ class ClientTaskManagementTests(TestCase):
         created_task = Task.objects.get(title="Prepare project notes")
         self.assertRedirects(response, "/")
         self.assertEqual(created_task.client, self.client_user)
+        self.assertEqual(
+            created_task.description, "<p>Important <strong>project</strong> notes.</p>"
+        )
+
+    def test_task_description_sanitizes_unsafe_html(self) -> None:
+        """Task descriptions preserve formatting without executable markup."""
+        response = self.client.post(
+            "/tasks/new/",
+            {
+                "project": self.project.pk,
+                "title": "Safe task",
+                "description": (
+                    '<p>Safe</p><script>alert("x")</script>'
+                    '<a href="javascript:bad">bad</a>'
+                ),
+                "status": Task.Status.OUTSTANDING,
+                "priority": Task.Priority.MEDIUM,
+            },
+        )
+
+        self.assertRedirects(response, "/")
+        task = Task.objects.get(title="Safe task")
+        self.assertNotIn("script", task.description.lower())
+        self.assertNotIn("javascript:", task.description.lower())
+        self.assertContains(self.client.get(task.get_absolute_url()), "Safe")
+
+    def test_task_without_description_shows_empty_state(self) -> None:
+        """Tasks without descriptions render a clear empty state."""
+        response = self.client.get(self.task.get_absolute_url())
+
+        self.assertContains(response, "No description added yet")
 
     def test_invalid_task_does_not_create_record(self) -> None:
         """An invalid task form is shown without creating a task."""

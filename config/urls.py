@@ -45,6 +45,7 @@ urlpatterns = [
         name="password-change",
     ),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("projects/", ClientProjectListView.as_view(), name="project-list"),
     path("projects/new/", ClientProjectCreateView.as_view(), name="project-create"),
     path(
