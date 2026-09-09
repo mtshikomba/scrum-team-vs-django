@@ -25,6 +25,10 @@ from core.views import (
     ClientProjectDeleteView,
     ClientProjectDetailView,
     ClientProjectListView,
+    ClientProjectInviteView,
+    ClientProjectInvitationRevokeView,
+    ClientProjectInvitationDeclineView,
+    ClientProjectMemberRemoveView,
     ClientProjectUpdateView,
     ClientProfileView,
     ClientPasswordChangeView,
@@ -33,6 +37,7 @@ from core.views import (
     ClientTaskDetailView,
     ClientTaskStatusView,
     ClientTaskUpdateView,
+    ClientProjectInvitationAcceptView,
     HealthCheckView,
 )
 
@@ -61,6 +66,31 @@ urlpatterns = [
         "projects/<int:pk>/delete/",
         ClientProjectDeleteView.as_view(),
         name="project-delete",
+    ),
+    path(
+        "projects/<int:pk>/collaborators/invite/",
+        ClientProjectInviteView.as_view(),
+        name="project-invite",
+    ),
+    path(
+        "invitations/<uuid:token>/accept/",
+        ClientProjectInvitationAcceptView.as_view(),
+        name="invitation-accept",
+    ),
+    path(
+        "invitations/<uuid:token>/decline/",
+        ClientProjectInvitationDeclineView.as_view(),
+        name="invitation-decline",
+    ),
+    path(
+        "projects/<int:pk>/collaborators/<int:invitation_id>/revoke/",
+        ClientProjectInvitationRevokeView.as_view(),
+        name="project-invitation-revoke",
+    ),
+    path(
+        "projects/<int:pk>/collaborators/<int:membership_id>/remove/",
+        ClientProjectMemberRemoveView.as_view(),
+        name="project-member-remove",
     ),
     path("tasks/new/", ClientTaskCreateView.as_view(), name="task-create"),
     path("tasks/<int:pk>/", ClientTaskDetailView.as_view(), name="task-detail"),

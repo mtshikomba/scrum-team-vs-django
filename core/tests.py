@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.test import Client as TestClient
 from django.test import TestCase
 
-from core.models import Project, Task
+from core.models import Project, ProjectInvitation, ProjectMembership, Task
 
 
 class HealthCheckViewTests(TestCase):
@@ -640,3 +640,126 @@ class ClientProjectManagementTests(TestCase):
         response = self.client.get("/tasks/new/")
 
         self.assertEqual(response.status_code, 403)
+
+
+class ProjectCollaborationTests(TestCase):
+    """Verify project invitation lifecycle and collaborator boundaries."""
+
+    def setUp(self) -> None:
+        self.client_group = Group.objects.create(name="Client")
+        self.owner = User.objects.create_user(
+            username="owner@example.com", password="test-password"
+        )
+        self.owner.groups.add(self.client_group)
+        self.invitee = User.objects.create_user(
+            username="invitee@example.com", password="test-password"
+        )
+        self.invitee.groups.add(self.client_group)
+        self.outsider = User.objects.create_user(
+            username="outsider@example.com", password="test-password"
+        )
+        self.project = Project.objects.create(client=self.owner, name="Shared project")
+        self.task = Task.objects.create(
+            client=self.owner, project=self.project, title="Shared task"
+        )
+        self.client.force_login(self.owner)
+
+    def test_owner_can_invite_client_and_invitee_can_accept(self) -> None:
+        """An owner can create an invitation that only its recipient accepts."""
+        response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/invite/",
+            {"username": self.invitee.username},
+        )
+
+        self.assertRedirects(response, self.project.get_absolute_url())
+        invitation = ProjectInvitation.objects.get(project=self.project)
+        self.assertEqual(invitation.invitee, self.invitee)
+        self.assertTrue(invitation.is_pending)
+
+        self.client.force_login(self.invitee)
+        response = self.client.post(f"/invitations/{invitation.token}/accept/")
+
+        self.assertRedirects(response, self.project.get_absolute_url())
+        self.assertTrue(
+            ProjectMembership.objects.filter(
+                project=self.project, user=self.invitee, is_active=True
+            ).exists()
+        )
+        self.assertEqual(
+            self.client.get(self.project.get_absolute_url()).status_code, 200
+        )
+        self.assertEqual(self.client.get(self.task.get_absolute_url()).status_code, 200)
+
+    def test_collaborator_cannot_manage_project_or_invite_users(self) -> None:
+        """Collaborators can work in a project but cannot manage ownership controls."""
+        membership = ProjectMembership.objects.create(
+            project=self.project, user=self.invitee
+        )
+        self.client.force_login(self.invitee)
+
+        self.assertEqual(
+            self.client.get(f"/projects/{self.project.pk}/edit/").status_code, 404
+        )
+        response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/invite/",
+            {"username": self.outsider.username},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            self.client.get(f"/tasks/{self.task.pk}/delete/").status_code, 404
+        )
+        membership.refresh_from_db()
+        self.assertTrue(membership.is_active)
+
+    def test_non_client_and_duplicate_invites_are_rejected(self) -> None:
+        """Invites reject non-clients and duplicate pending invitations."""
+        first_response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/invite/",
+            {"username": self.invitee.username},
+        )
+        duplicate_response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/invite/",
+            {"username": self.invitee.username},
+        )
+        outsider_response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/invite/",
+            {"username": self.outsider.username},
+        )
+
+        self.assertEqual(first_response.status_code, 302)
+        self.assertEqual(duplicate_response.status_code, 200)
+        self.assertContains(duplicate_response, "already invited")
+        self.assertEqual(outsider_response.status_code, 200)
+        self.assertContains(outsider_response, "Client user")
+        self.assertEqual(
+            ProjectInvitation.objects.filter(project=self.project).count(), 1
+        )
+
+    def test_owner_can_revoke_invitation_and_remove_member(self) -> None:
+        """Owner membership controls preserve project data while removing access."""
+        invitation = ProjectInvitation.objects.create(
+            project=self.project, inviter=self.owner, invitee=self.invitee
+        )
+        revoke_response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/{invitation.pk}/revoke/"
+        )
+
+        self.assertRedirects(
+            revoke_response, f"/projects/{self.project.pk}/collaborators/invite/"
+        )
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.status, ProjectInvitation.Status.REVOKED)
+
+        membership = ProjectMembership.objects.create(
+            project=self.project, user=self.invitee
+        )
+        remove_response = self.client.post(
+            f"/projects/{self.project.pk}/collaborators/{membership.pk}/remove/"
+        )
+
+        self.assertRedirects(
+            remove_response, f"/projects/{self.project.pk}/collaborators/invite/"
+        )
+        membership.refresh_from_db()
+        self.assertFalse(membership.is_active)
+        self.assertTrue(Project.objects.filter(pk=self.project.pk).exists())

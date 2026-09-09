@@ -110,6 +110,15 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
 .detail-grid > div { display: grid; gap: 10px; padding: 22px; background: var(--white); }
 .detail-label { color: var(--muted); font: 700 0.68rem/1 Arial, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
 .detail-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.collaboration-panel { margin-top: 32px; padding: 24px; background: var(--white); border: 1px solid var(--line); }
+.collaboration-panel h2 { margin-bottom: 20px; font-size: 1.8rem; }
+.collaboration-panel form { display: grid; gap: 16px; }
+.collaboration-panel form p { display: grid; gap: 8px; margin: 0; font: 700 0.75rem/1.2 Arial, sans-serif; text-transform: uppercase; }
+.collaboration-panel input { width: 100%; padding: 12px; border: 1px solid var(--line); font: 1rem Georgia, serif; }
+.collaboration-panel > p { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0; padding: 14px 0; border-top: 1px solid var(--line); }
+.collaboration-panel > p:first-of-type { padding-top: 0; border-top: 0; }
+.collaboration-panel > p form { display: inline-flex; margin-left: auto; }
+.collaboration-panel .danger-button { min-height: 38px; padding: 10px 14px; }
 .project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .project-card { display: grid; gap: 14px; min-height: 130px; padding: 22px; color: var(--ink); background: var(--white); border: 1px solid var(--line); text-decoration: none; }
 .project-card:hover { border-color: var(--teal); }
@@ -139,6 +148,10 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
     .due-date { text-align: right; }
     .login-panel { padding: 30px 24px; }
     .detail-panel { padding: 52px 0; }
+    .collaboration-panel { margin-top: 24px; padding: 18px; }
+    .collaboration-panel h2 { font-size: 1.5rem; }
+    .collaboration-panel > p form { width: 100%; margin-left: 0; }
+    .collaboration-panel > p .danger-button { width: 100%; }
     .detail-grid { grid-template-columns: 1fr; }
     .project-grid { grid-template-columns: 1fr; }
 }
