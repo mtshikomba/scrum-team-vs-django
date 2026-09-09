@@ -2,6 +2,10 @@
 
 This workspace defines the global instructions, specialized agents, and repeatable skills for an automated Python/Django scrum team. 
 
+### 📚 Instruction Source and Precedence
+
+`AGENTS.md` is the canonical repository instruction source. `.github/copilot-instructions.md` is the sole Copilot entry-point pointer and must not duplicate repository policy. When instructions from a more specific directory apply, follow them together with this file and resolve conflicts in favor of the more specific instruction.
+
 ### 📜 1. Global Custom Instructions (The Team Rules)
 
 These rules apply universally to all agents, code generations, and chat interactions within this workspace. 
