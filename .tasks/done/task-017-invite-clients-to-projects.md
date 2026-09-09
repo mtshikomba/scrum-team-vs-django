@@ -132,7 +132,7 @@ The invitation workflow must define how an invited client receives and accepts a
 
 ## Approval
 
-Status: Implemented and validated; UX review passed, ready for technical review.
+Status: Implemented, UX-reviewed, and ready for merge.
 
 ## UX Review
 
