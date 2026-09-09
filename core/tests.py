@@ -265,6 +265,26 @@ class ClientLandingPageTests(TestCase):
         self.assertNotContains(response, "Private task")
         self.assertEqual(response.context["task_counts"]["in_progress"], 1)
 
+    def test_landing_page_defaults_to_status_lanes_with_list_fallback(self) -> None:
+        """The workspace exposes default lanes and the current list view."""
+        self.client.force_login(self.client_user)
+        Task.objects.create(
+            client=self.client_user,
+            project=self.project,
+            title="Lane task",
+            status=Task.Status.COMPLETED,
+        )
+
+        response = self.client.get("/")
+
+        self.assertContains(response, 'data-task-view="lanes"')
+        self.assertContains(response, 'data-task-view-panel="lanes"')
+        self.assertContains(response, 'data-task-view-panel="list"')
+        self.assertContains(response, "Outstanding")
+        self.assertContains(response, "In progress")
+        self.assertContains(response, "Completed")
+        self.assertContains(response, "Move to")
+
     def test_landing_page_shows_empty_state_without_tasks(self) -> None:
         """A client without tasks receives a useful empty state."""
         self.client.force_login(self.client_user)
@@ -384,6 +404,47 @@ class ClientTaskManagementTests(TestCase):
         self.assertEqual(self.task.title, "Updated brief")
         self.assertEqual(self.task.status, Task.Status.COMPLETED)
 
+    def test_client_can_move_owned_task_between_statuses(self) -> None:
+        """An owner can persist a status-lane move without changing task data."""
+        response = self.client.post(
+            f"/tasks/{self.task.pk}/status/",
+            {"status": Task.Status.IN_PROGRESS},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            response.content,
+            {"status": Task.Status.IN_PROGRESS, "label": "In progress"},
+        )
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.IN_PROGRESS)
+        self.assertEqual(self.task.title, "Review project brief")
+        self.assertEqual(self.task.project, self.project)
+        self.assertEqual(self.task.priority, Task.Priority.MEDIUM)
+
+    def test_task_status_move_rejects_invalid_status(self) -> None:
+        """Invalid lane values do not change the task status."""
+        response = self.client.post(
+            f"/tasks/{self.task.pk}/status/", {"status": "not-a-status"}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.OUTSTANDING)
+
+    def test_other_client_cannot_move_owned_task(self) -> None:
+        """A client cannot move another client's task by identifier."""
+        self.task.client = self.other_user
+        self.task.save(update_fields=["client"])
+
+        response = self.client.post(
+            f"/tasks/{self.task.pk}/status/", {"status": Task.Status.COMPLETED}
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.OUTSTANDING)
+
     def test_client_can_delete_owned_task(self) -> None:
         """An owner can confirm and delete its task."""
         confirm_response = self.client.get(f"/tasks/{self.task.pk}/delete/")
@@ -459,6 +520,25 @@ class ClientProjectManagementTests(TestCase):
         project = Project.objects.get(name="Website refresh")
         self.assertRedirects(response, project.get_absolute_url())
         self.assertContains(self.client.get("/projects/"), project.name)
+
+    def test_project_detail_defaults_to_status_lanes_with_list_fallback(self) -> None:
+        """Project tasks expose the same lane and list presentation controls."""
+        task = Task.objects.create(
+            client=self.client_user,
+            project=Project.objects.create(
+                client=self.client_user, name="Lane project"
+            ),
+            title="Lane task",
+        )
+
+        response = self.client.get(task.project.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-task-view="lanes"')
+        self.assertContains(response, 'data-task-view-panel="list"')
+        self.assertContains(response, "Lane task")
+        self.assertContains(response, "Move to")
+        self.assertContains(response, 'option value="completed"')
 
     def test_project_pages_use_the_full_width_layout_hook(self) -> None:
         """Project pages expose the layout hook that expands their content area."""

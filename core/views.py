@@ -1,4 +1,4 @@
-from django.http import HttpRequest, JsonResponse
+from django.http import Http404, HttpRequest, JsonResponse
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -14,11 +14,24 @@ from django.views.generic import (
     UpdateView,
 )
 from django.contrib.auth.views import PasswordChangeView
+from typing import Iterable
 
 from core.forms import ClientProfileForm, ClientRegistrationForm, ProjectForm, TaskForm
 from django.contrib.auth.models import User
 
 from core.models import Project, Task
+
+
+def build_task_lanes(tasks: Iterable[Task]) -> list[dict[str, object]]:
+    """Group tasks into the stable status order used by task boards."""
+    return [
+        {
+            "value": status.value,
+            "label": status.label,
+            "tasks": [task for task in tasks if task.status == status.value],
+        }
+        for status in Task.Status
+    ]
 
 
 class ClientAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -86,17 +99,16 @@ class ClientLandingPageView(ClientAccessMixin, TemplateView):
         tasks = self.get_tasks()
         status_counts = tasks.values("status").annotate(total=Count("id"))
         counts = {item["status"]: item["total"] for item in status_counts}
-        context.update(
-            {
-                "projects": self.get_projects(),
-                "tasks": tasks,
-                "task_counts": {
-                    "outstanding": counts.get(Task.Status.OUTSTANDING, 0),
-                    "in_progress": counts.get(Task.Status.IN_PROGRESS, 0),
-                    "completed": counts.get(Task.Status.COMPLETED, 0),
-                },
-            }
-        )
+        context["projects"] = self.get_projects()
+        context["tasks"] = tasks
+        context["task_lanes"] = build_task_lanes(tasks)
+        context["task_statuses"] = Task.Status.choices
+        context["task_view_label"] = "Task list"
+        context["task_counts"] = {
+            "outstanding": counts.get(Task.Status.OUTSTANDING, 0),
+            "in_progress": counts.get(Task.Status.IN_PROGRESS, 0),
+            "completed": counts.get(Task.Status.COMPLETED, 0),
+        }
         return context
 
 
@@ -161,6 +173,25 @@ class ClientTaskUpdateView(ClientTaskQuerysetMixin, UpdateView):
         return self.object.get_absolute_url()
 
 
+class ClientTaskStatusView(ClientTaskQuerysetMixin, View):
+    """Persist a status-lane move for an owned task."""
+
+    def post(self, request: HttpRequest, pk: int) -> JsonResponse:
+        """Update only the requested task status and return its label."""
+        task = self.get_queryset().filter(pk=pk).first()
+        if task is None:
+            raise Http404
+
+        status = request.POST.get("status")
+        valid_statuses = {choice.value: choice.label for choice in Task.Status}
+        if status not in valid_statuses:
+            return JsonResponse({"error": "Invalid task status."}, status=400)
+
+        task.status = status
+        task.save(update_fields=["status", "updated_at"])
+        return JsonResponse({"status": status, "label": valid_statuses[status]})
+
+
 class ClientTaskDeleteView(ClientTaskQuerysetMixin, DeleteView):
     """Delete one task owned by the authenticated client."""
 
@@ -215,6 +246,16 @@ class ClientProjectDetailView(ClientProjectQuerysetMixin, DetailView):
 
     model = Project
     template_name = "core/project_detail.html"
+
+    def get_context_data(self, **kwargs: object) -> dict[str, object]:
+        """Add stable status lanes for this project's tasks."""
+        context = super().get_context_data(**kwargs)
+        tasks = list(self.object.tasks.all())
+        context["tasks"] = tasks
+        context["task_lanes"] = build_task_lanes(tasks)
+        context["task_statuses"] = Task.Status.choices
+        context["task_view_label"] = "Project tasks"
+        return context
 
 
 class ClientProjectUpdateView(ClientProjectQuerysetMixin, UpdateView):
