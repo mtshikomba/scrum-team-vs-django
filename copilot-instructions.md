@@ -1,1 +1,0 @@
-Refer to [AGENTS.md](./AGENTS.md) for all repository instructions. `AGENTS.md` is the canonical source; this file is an entry-point pointer only.

@@ -1,1 +1,1 @@
-Refer to [AGENTS.md](../AGENTS.md) for all repository instructions. `AGENTS.md` is the canonical source; this file is an entry-point pointer only.
+Refer to [AGENTS.md](../AGENTS.md) for all repository instructions. `AGENTS.md` is the canonical source; this is the sole Copilot entry-point pointer.

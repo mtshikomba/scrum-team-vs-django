@@ -11,7 +11,7 @@ The workspace now contains `AGENTS.md` with the full Django engineering workflow
 ## Scope
 
 - Decide and document the canonical source of repository agent instructions.
-- Align `AGENTS.md`, root `copilot-instructions.md`, and `.github/copilot-instructions.md` so their delegation, precedence, and discovery behavior are clear.
+- Align `AGENTS.md` and `.github/copilot-instructions.md` so their delegation, precedence, and discovery behavior are clear, with no duplicate root Copilot instruction file.
 - Reconcile overlapping workflow rules across the instruction files, including agent responsibilities, approval gates, UX review, ticket lifecycle, branch/PR naming, and Definition of Done.
 - Preserve the existing product-owner, UX-developer, developer, and tech-lead workflow unless an explicit documentation correction is required.
 - Update `README.md` only where its workflow or setup guidance becomes inaccurate after the instruction-file alignment.
@@ -20,8 +20,8 @@ The workspace now contains `AGENTS.md` with the full Django engineering workflow
 
 ## Acceptance Criteria
 
-- [x] The repository has one clearly identified canonical instruction source, and the relationship between `AGENTS.md`, root `copilot-instructions.md`, and `.github/copilot-instructions.md` is documented.
-- [x] Instruction discovery and precedence are unambiguous for agents operating from the repository root and from GitHub-related contexts.
+- [x] The repository has one clearly identified canonical instruction source, and the relationship between `AGENTS.md` and `.github/copilot-instructions.md` is documented.
+- [x] Instruction discovery and precedence are unambiguous for agents operating from the repository root and from GitHub-related contexts; no duplicate root Copilot instruction file remains.
 - [x] Agent responsibilities and guardrails are consistent across the applicable instruction files, including the product-owner restriction to documentation/ticket work and the UX-developer boundary around backend/domain changes.
 - [x] The documented workflow consistently places product approval, UX specification, implementation, UX/browser validation, technical review, and merge in the intended order.
 - [x] Ticket lifecycle, canonical-copy, branch naming, PR naming, and merge requirements are consistent and do not introduce duplicate or contradictory rules.
@@ -40,7 +40,7 @@ The workspace now contains `AGENTS.md` with the full Django engineering workflow
 
 ## Implementation Notes
 
-- Inspect the current contents and repository tracking state of `AGENTS.md`, `copilot-instructions.md`, `.github/copilot-instructions.md`, and `README.md` before editing.
+- Inspect the current contents and repository tracking state of `AGENTS.md`, `.github/copilot-instructions.md`, and `README.md` before editing; verify that the root `copilot-instructions.md` is absent.
 - Preserve one canonical ticket copy and verify its lifecycle path after each move.
 - Use branch `task-014/align-agent-instruction-files`.
 - Pull request title: `[task-014] Align agent instruction files`.
