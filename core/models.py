@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
 from django_ckeditor_5.fields import CKEditor5Field
@@ -55,6 +57,122 @@ class Project(models.Model):
         from django.urls import reverse
 
         return reverse("project-detail", kwargs={"pk": self.pk})
+
+
+class ProjectMembership(models.Model):
+    """Grant an accepted client access to a project and its tasks."""
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+        verbose_name="project",
+        help_text="The project shared with this client.",
+        db_index=True,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="project_memberships",
+        verbose_name="client",
+        help_text="The client who accepted access to this project.",
+        db_index=True,
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="active",
+        help_text="Whether this client currently has project access.",
+        db_index=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="created at",
+        help_text="When project access was granted.",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("project", "user"), name="unique_project_membership"
+            )
+        ]
+        verbose_name = "project membership"
+        verbose_name_plural = "project memberships"
+
+
+class ProjectInvitation(models.Model):
+    """Represent a single-use invitation to join a client project."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
+        REVOKED = "revoked", "Revoked"
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="invitations",
+        verbose_name="project",
+        help_text="The project this invitation grants access to.",
+        db_index=True,
+    )
+    inviter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_project_invitations",
+        verbose_name="inviter",
+        help_text="The project owner who sent this invitation.",
+    )
+    invitee = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="received_project_invitations",
+        verbose_name="invitee",
+        help_text="The client who may accept this invitation.",
+    )
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        verbose_name="invitation token",
+        help_text="The opaque single-use invitation identifier.",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="status",
+        help_text="The current invitation lifecycle state.",
+        db_index=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="created at",
+        help_text="When this invitation was created.",
+    )
+    accepted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="accepted at",
+        help_text="When the invitee accepted this invitation.",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("project", "invitee"),
+                condition=models.Q(status="pending"),
+                name="unique_pending_project_invitation",
+            )
+        ]
+        verbose_name = "project invitation"
+        verbose_name_plural = "project invitations"
+
+    @property
+    def is_pending(self) -> bool:
+        """Return whether the invitation can still be accepted."""
+        return self.status == self.Status.PENDING
 
 
 class Task(models.Model):

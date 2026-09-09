@@ -1,0 +1,5 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Project invitation | Client tasks</title><link rel="stylesheet" href="{% static 'core/landing.css' %}"></head>
+<body class="auth-page"><main class="login-panel"><p class="eyebrow">Project invitation</p><h1>Join {{ invitation.project.name }}?</h1><p class="form-note">{{ invitation.inviter.username }} invited you to collaborate on this project.</p><form method="post">{% csrf_token %}<button class="primary-button primary-button--full" type="submit">Accept invitation</button></form><form method="post" action="{% url 'invitation-decline' invitation.token %}">{% csrf_token %}<button class="secondary-button primary-button--full" type="submit">Decline invitation</button></form></main></body></html>
