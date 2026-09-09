@@ -472,6 +472,30 @@ class ClientProjectManagementTests(TestCase):
             project_detail_response, 'class="detail-panel project-page"'
         )
 
+    def test_project_and_task_action_pages_show_workspace_navigation(self) -> None:
+        """Project and task action pages render the shared workspace navigation."""
+        project = Project.objects.create(client=self.client_user, name="Workspace")
+        task = Task.objects.create(
+            client=self.client_user, project=project, title="Review navigation"
+        )
+        action_paths = (
+            "/projects/new/",
+            f"/projects/{project.pk}/edit/",
+            f"/projects/{project.pk}/delete/",
+            "/tasks/new/",
+            f"/tasks/{task.pk}/edit/",
+            f"/tasks/{task.pk}/delete/",
+        )
+
+        for path in action_paths:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'class="topbar"')
+                self.assertContains(response, 'class="brand"')
+                self.assertContains(response, 'action="/accounts/logout/"')
+
     def test_project_name_is_unique_per_client(self) -> None:
         """A client cannot create duplicate project names."""
         Project.objects.create(client=self.client_user, name="Website refresh")
