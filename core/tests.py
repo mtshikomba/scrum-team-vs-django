@@ -763,3 +763,45 @@ class ProjectCollaborationTests(TestCase):
         membership.refresh_from_db()
         self.assertFalse(membership.is_active)
         self.assertTrue(Project.objects.filter(pk=self.project.pk).exists())
+
+    def test_owner_can_search_eligible_clients_for_invitation(self) -> None:
+        """Suggestion results contain only eligible Client usernames."""
+        matching_client = User.objects.create_user(username="@match-client")
+        matching_client.groups.add(self.client_group)
+        User.objects.create_user(username="@match-staff")
+        active_client = User.objects.create_user(username="@match-active")
+        active_client.groups.add(self.client_group)
+        pending_client = User.objects.create_user(username="@match-pending")
+        pending_client.groups.add(self.client_group)
+        ProjectMembership.objects.create(project=self.project, user=active_client)
+        ProjectInvitation.objects.create(
+            project=self.project, inviter=self.owner, invitee=pending_client
+        )
+
+        response = self.client.get(
+            f"/projects/{self.project.pk}/collaborators/suggestions/?q=@match"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            response.content, {"results": [{"username": "@match-client"}]}
+        )
+
+    def test_owner_invite_page_exposes_accessible_typeahead_hooks(self) -> None:
+        """The invite form exposes the combobox and suggestion endpoint hooks."""
+        response = self.client.get(f"/projects/{self.project.pk}/collaborators/invite/")
+
+        self.assertContains(response, 'role="combobox"')
+        self.assertContains(response, 'aria-controls="invite-suggestions"')
+        self.assertContains(response, 'role="listbox"')
+        self.assertContains(response, "invite_typeahead.js")
+
+    def test_invitation_suggestions_are_owner_only(self) -> None:
+        """Non-owners cannot enumerate invitation suggestions."""
+        self.client.force_login(self.invitee)
+
+        response = self.client.get(
+            f"/projects/{self.project.pk}/collaborators/suggestions/?q=@"
+        )
+
+        self.assertEqual(response.status_code, 404)
