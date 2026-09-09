@@ -58,30 +58,7 @@
                     <span class="task-count">{{ tasks|length }} task{{ tasks|length|pluralize }}</span>
                 </div>
 
-                {% if tasks %}
-                    <div class="task-table" role="list">
-                        <div class="task-row task-row--header" aria-hidden="true">
-                            <span>Task</span><span>Status</span><span>Priority</span><span>Due</span>
-                        </div>
-                        {% for task in tasks %}
-                            <article class="task-row" role="listitem">
-                                <div class="task-name">
-                                    <span class="task-dot task-dot--{{ task.status }}"></span>
-                                    <div><a class="task-link" href="{{ task.get_absolute_url }}"><strong>{{ task.title }}</strong></a><small>Updated {{ task.updated_at|date:"M j, Y" }}</small></div>
-                                </div>
-                                <span class="status status--{{ task.status }}">{{ task.get_status_display }}</span>
-                                <span class="priority priority--{{ task.priority }}">{{ task.get_priority_display }}</span>
-                                <span class="due-date">{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}No due date{% endif %}</span>
-                            </article>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state">
-                        <span class="empty-icon" aria-hidden="true">+</span>
-                        <h3>No tasks yet</h3>
-                        <p>Your project tasks will appear here when they are ready.</p>
-                    </div>
-                {% endif %}
+                {% include "core/_task_views.html" %}
             </section>
 
             <section class="task-section" aria-labelledby="project-list-title">
@@ -111,5 +88,6 @@
             </section>
         </main>
     </div>
+    <script src="{% static 'core/task_board.js' %}" defer></script>
 </body>
 </html>

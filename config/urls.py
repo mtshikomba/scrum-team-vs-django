@@ -31,6 +31,7 @@ from core.views import (
     ClientTaskCreateView,
     ClientTaskDeleteView,
     ClientTaskDetailView,
+    ClientTaskStatusView,
     ClientTaskUpdateView,
     HealthCheckView,
 )
@@ -64,6 +65,11 @@ urlpatterns = [
     path("tasks/new/", ClientTaskCreateView.as_view(), name="task-create"),
     path("tasks/<int:pk>/", ClientTaskDetailView.as_view(), name="task-detail"),
     path("tasks/<int:pk>/edit/", ClientTaskUpdateView.as_view(), name="task-update"),
+    path(
+        "tasks/<int:pk>/status/",
+        ClientTaskStatusView.as_view(),
+        name="task-status",
+    ),
     path(
         "tasks/<int:pk>/delete/",
         ClientTaskDeleteView.as_view(),

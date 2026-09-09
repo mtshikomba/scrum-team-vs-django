@@ -1,0 +1,56 @@
+<div class="task-view-controls" role="group" aria-label="{{ task_view_label }} display mode">
+    <button class="view-toggle is-selected" type="button" data-task-view="lanes" aria-pressed="true">Lanes</button>
+    <button class="view-toggle" type="button" data-task-view="list" aria-pressed="false">List</button>
+</div>
+<div class="task-view task-view--lanes" data-task-view-panel="lanes">
+    <div class="task-lanes">
+        {% for lane in task_lanes %}
+            <section class="task-lane" data-status="{{ lane.value }}" aria-labelledby="{{ lane.value }}-lane-title">
+                <header class="task-lane__header">
+                    <h3 id="{{ lane.value }}-lane-title">{{ lane.label }}</h3>
+                    <span class="task-count">{{ lane.tasks|length }} task{{ lane.tasks|length|pluralize }}</span>
+                </header>
+                <div class="task-lane__dropzone" data-status="{{ lane.value }}" aria-label="{{ lane.label }} tasks">
+                    {% for task in lane.tasks %}
+                        <article class="task-card" data-task-card data-task-id="{{ task.pk }}" data-status="{{ task.status }}" draggable="true">
+                            <a class="task-link" href="{{ task.get_absolute_url }}"><strong>{{ task.title }}</strong></a>
+                            <div class="task-card__meta">
+                                <span class="priority priority--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                                <span class="due-date">{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}No due date{% endif %}</span>
+                            </div>
+                            <label class="task-move-label" for="task-move-{{ task.pk }}">Move to</label>
+                            <select class="task-move" id="task-move-{{ task.pk }}" data-task-move data-status-url="{% url 'task-status' task.pk %}" data-current-status="{{ task.status }}">
+                                {% for option in task_statuses %}
+                                    <option value="{{ option.0 }}"{% if option.0 == task.status %} selected{% endif %}>{{ option.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </article>
+                    {% empty %}
+                        <p class="task-lane__empty" data-lane-empty>No tasks here yet.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endfor %}
+    </div>
+</div>
+<div class="task-view task-view--list" data-task-view-panel="list" hidden>
+    <div class="task-table" role="list">
+        <div class="task-row task-row--header" aria-hidden="true">
+            <span>Task</span><span>Status</span><span>Priority</span><span>Due</span>
+        </div>
+        {% for task in tasks %}
+            <article class="task-row" role="listitem">
+                <div class="task-name">
+                    <span class="task-dot task-dot--{{ task.status }}"></span>
+                    <div><a class="task-link" href="{{ task.get_absolute_url }}"><strong>{{ task.title }}</strong></a><small>Updated {{ task.updated_at|date:"M j, Y" }}</small></div>
+                </div>
+                <span class="status status--{{ task.status }}">{{ task.get_status_display }}</span>
+                <span class="priority priority--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                <span class="due-date">{% if task.due_date %}{{ task.due_date|date:"M j, Y" }}{% else %}No due date{% endif %}</span>
+            </article>
+        {% empty %}
+            <div class="empty-state"><h3>No tasks yet</h3><p>Your project tasks will appear here when they are ready.</p></div>
+        {% endfor %}
+    </div>
+</div>
+<div class="task-feedback" data-task-feedback aria-live="polite" role="status"></div>
