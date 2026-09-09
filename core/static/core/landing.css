@@ -68,6 +68,9 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
 .empty-state h3 { margin: 18px 0 8px; font-size: 1.5rem; font-weight: 400; }
 .empty-state p { margin: 0; color: var(--muted); }
 .auth-page { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: var(--blue-wash); }
+.action-page { display: block; padding: 0; }
+.action-page .page-shell { width: min(100%, 1180px); min-height: 100vh; margin: 0 auto; }
+.action-page .login-panel { margin: 72px auto 0; }
 .login-panel { width: min(100%, 420px); padding: 42px; background: var(--white); box-shadow: var(--shadow); }
 .login-panel h1 { margin: 30px 0; font-size: 2.7rem; }
 .login-panel form p { display: grid; gap: 8px; margin-bottom: 18px; font: 700 0.75rem/1.2 Arial, sans-serif; text-transform: uppercase; }
