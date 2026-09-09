@@ -26,6 +26,7 @@ from core.views import (
     ClientProjectDetailView,
     ClientProjectListView,
     ClientProjectInviteView,
+    ClientProjectInviteSuggestionsView,
     ClientProjectInvitationRevokeView,
     ClientProjectInvitationDeclineView,
     ClientProjectMemberRemoveView,
@@ -71,6 +72,11 @@ urlpatterns = [
         "projects/<int:pk>/collaborators/invite/",
         ClientProjectInviteView.as_view(),
         name="project-invite",
+    ),
+    path(
+        "projects/<int:pk>/collaborators/suggestions/",
+        ClientProjectInviteSuggestionsView.as_view(),
+        name="project-invite-suggestions",
     ),
     path(
         "invitations/<uuid:token>/accept/",

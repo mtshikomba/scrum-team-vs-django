@@ -87,6 +87,15 @@ class ProjectInviteForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.project = project
         self.inviter = inviter
+        self.fields["username"].widget.attrs.update(
+            {
+                "autocomplete": "off",
+                "role": "combobox",
+                "aria-autocomplete": "list",
+                "aria-controls": "invite-suggestions",
+                "aria-expanded": "false",
+            }
+        )
 
     def clean_username(self) -> str:
         """Validate that the target is an eligible, non-member Client user."""

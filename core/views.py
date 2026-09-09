@@ -351,6 +351,33 @@ class ClientProjectInviteView(ClientProjectOwnerMixin, View):
         )
 
 
+class ClientProjectInviteSuggestionsView(ClientProjectOwnerMixin, View):
+    """Return eligible Client usernames for an owner's invite combobox."""
+
+    def get(self, request: HttpRequest, pk: int) -> JsonResponse:
+        """Return a small, privacy-filtered username result set."""
+        project = get_object_or_404(self.get_queryset(), pk=pk)
+        query = request.GET.get("q", "").strip()
+        if query.startswith("@"):
+            query = query[1:]
+
+        active_ids = ProjectMembership.objects.filter(
+            project=project, is_active=True
+        ).values("user_id")
+        pending_ids = ProjectInvitation.objects.filter(
+            project=project, status=ProjectInvitation.Status.PENDING
+        ).values("invitee_id")
+        results = (
+            User.objects.filter(groups__name="Client", username__icontains=query)
+            .exclude(pk=request.user.pk)
+            .exclude(pk__in=active_ids)
+            .exclude(pk__in=pending_ids)
+            .order_by("username")
+            .values("username")[:10]
+        )
+        return JsonResponse({"results": list(results)})
+
+
 class ClientProjectInvitationAcceptView(ClientAccessMixin, View):
     """Accept a pending invitation for its intended Client recipient."""
 
