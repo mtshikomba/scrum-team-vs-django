@@ -2,6 +2,10 @@
 
 Minimal Django project scaffold for local development.
 
+## Repository Instructions
+
+`AGENTS.md` is the canonical source for repository instructions, agent responsibilities, workflow gates, ticket lifecycle rules, and the Definition of Done. The root `copilot-instructions.md` and `.github/copilot-instructions.md` are discovery entry points that link to `AGENTS.md`; keep them as pointers rather than maintaining a second copy of the policy. More-specific instruction files apply alongside `AGENTS.md` and take precedence when they address the same path or concern.
+
 ## Agent Workflow
 
 This project uses four agents to move work from an idea to reviewed code:
