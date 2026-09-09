@@ -460,6 +460,18 @@ class ClientProjectManagementTests(TestCase):
         self.assertRedirects(response, project.get_absolute_url())
         self.assertContains(self.client.get("/projects/"), project.name)
 
+    def test_project_pages_use_the_full_width_layout_hook(self) -> None:
+        """Project pages expose the layout hook that expands their content area."""
+        project = Project.objects.create(client=self.client_user, name="Workspace")
+
+        project_list_response = self.client.get("/projects/")
+        project_detail_response = self.client.get(project.get_absolute_url())
+
+        self.assertContains(project_list_response, 'class="detail-panel project-page"')
+        self.assertContains(
+            project_detail_response, 'class="detail-panel project-page"'
+        )
+
     def test_project_name_is_unique_per_client(self) -> None:
         """A client cannot create duplicate project names."""
         Project.objects.create(client=self.client_user, name="Website refresh")
