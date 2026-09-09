@@ -105,4 +105,4 @@ The project and task list/detail pages render the shared `topbar` with the Clien
 
 ## Approval
 
-Status: Implemented and validated; ready for technical review.
+Status: Completed and merged in PR #14.

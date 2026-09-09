@@ -90,4 +90,4 @@ The project index (`/projects/`) and project detail page (`/projects/6/`) share 
 
 ## Approval
 
-Status: Implemented and validated; ready for UX final review and tech-lead review.
+Status: Completed and merged in PR #12.

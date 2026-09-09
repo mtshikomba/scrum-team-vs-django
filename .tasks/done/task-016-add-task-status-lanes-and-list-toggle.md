@@ -133,7 +133,7 @@ Lanes should be the default view. Clients must be able to switch between the lan
 
 ## Approval
 
-Status: Implemented and validated; UX review passed, ready for technical review.
+Status: Completed and merged in PR #15.
 
 ## UX Review
 
