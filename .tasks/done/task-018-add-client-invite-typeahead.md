@@ -118,7 +118,7 @@ The suggestions must be generated server-side from the authenticated project own
 
 ## Approval
 
-Status: Implemented and validated; UX review passed, ready for technical review.
+Status: Completed and merged in PR #17.
 
 ## UX Review
 

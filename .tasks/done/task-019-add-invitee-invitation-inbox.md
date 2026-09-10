@@ -113,7 +113,7 @@ The invitation token must remain private and recipient-authorized. The new UI sh
 
 ## Approval
 
-Status: Implemented and validated; UX review passed, ready for technical review.
+Status: Completed and merged in PR #18.
 
 ## UX Review
 
