@@ -15,6 +15,7 @@
         <a class="back-link" href="{% url 'project-list' %}">← Back to projects</a>
         <p class="eyebrow">Client workspace</p>
         <h1>{% if object %}Edit task{% else %}Create a task{% endif %}</h1>
+        {% if project_context %}<p class="form-note task-project-context">Adding this task to <strong>{{ project_context.name }}</strong>.</p>{% elif object %}<p class="form-note task-project-context">Project can be changed while editing.</p>{% endif %}
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
