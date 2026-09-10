@@ -59,7 +59,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/workspace/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 CKEDITOR_5_CONFIGS = {

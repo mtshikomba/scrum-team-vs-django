@@ -17,6 +17,41 @@ class HealthCheckViewTests(TestCase):
         self.assertJSONEqual(response.content, {"status": "ok"})
 
 
+class PublicLandingPageTests(TestCase):
+    """Verify public landing access and navigation to authentication."""
+
+    def test_anonymous_users_can_view_public_landing(self) -> None:
+        """Anonymous visitors see product information and auth actions."""
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Client tasks")
+        self.assertContains(response, "Sign in")
+        self.assertContains(response, "Create an account")
+        self.assertContains(response, "Project-based task management")
+        self.assertContains(response, "Ready to work together?")
+        self.assertContains(response, "Client tasks")
+
+    def test_authenticated_users_can_continue_to_workspace(self) -> None:
+        """Authenticated users can reach the protected workspace from public entry."""
+        client_group = Group.objects.create(name="Client")
+        user = User.objects.create_user(username="landing-client", password="password")
+        user.groups.add(client_group)
+        self.client.force_login(user)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Open workspace")
+        self.assertContains(response, "/workspace/")
+
+    def test_workspace_requires_client_access(self) -> None:
+        """The authenticated workspace remains protected at its stable route."""
+        response = self.client.get("/workspace/")
+
+        self.assertRedirects(response, "/accounts/login/?next=/workspace/")
+
+
 class ClientProfileTests(TestCase):
     """Verify client profile access and privilege boundaries."""
 
@@ -209,11 +244,11 @@ class ClientLandingPageTests(TestCase):
             client=self.other_user, name="Other project"
         )
 
-    def test_anonymous_users_are_redirected_to_login(self) -> None:
-        """Anonymous users cannot access the client landing page."""
-        response = self.client.get("/")
+    def test_anonymous_users_are_redirected_to_login_for_workspace(self) -> None:
+        """Anonymous users cannot access the protected workspace."""
+        response = self.client.get("/workspace/")
 
-        self.assertRedirects(response, "/accounts/login/?next=/")
+        self.assertRedirects(response, "/accounts/login/?next=/workspace/")
 
     def test_client_login_redirects_to_landing_page(self) -> None:
         """A client who signs in is sent to the client landing page."""
@@ -222,13 +257,13 @@ class ClientLandingPageTests(TestCase):
             {"username": "client@example.com", "password": "test-password"},
         )
 
-        self.assertRedirects(response, "/")
+        self.assertRedirects(response, "/workspace/")
 
     def test_authenticated_non_client_is_forbidden(self) -> None:
         """An authenticated user outside the Client group is denied."""
         self.client.force_login(self.other_user)
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertEqual(response.status_code, 403)
 
@@ -238,7 +273,7 @@ class ClientLandingPageTests(TestCase):
         self.other_user.save(update_fields=["is_staff"])
         self.client.force_login(self.other_user)
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertEqual(response.status_code, 403)
 
@@ -258,7 +293,7 @@ class ClientLandingPageTests(TestCase):
         )
         self.client.force_login(self.client_user)
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, own_task.title)
@@ -275,7 +310,7 @@ class ClientLandingPageTests(TestCase):
             status=Task.Status.COMPLETED,
         )
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertContains(response, 'data-task-view="lanes"')
         self.assertContains(response, 'data-task-view-panel="lanes"')
@@ -289,7 +324,7 @@ class ClientLandingPageTests(TestCase):
         """A client without tasks receives a useful empty state."""
         self.client.force_login(self.client_user)
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertContains(response, "No tasks yet")
 
@@ -333,7 +368,7 @@ class ClientTaskManagementTests(TestCase):
         )
 
         created_task = Task.objects.get(title="Prepare project notes")
-        self.assertRedirects(response, "/")
+        self.assertRedirects(response, "/workspace/")
         self.assertEqual(created_task.client, self.client_user)
         self.assertEqual(
             created_task.description, "<p>Important <strong>project</strong> notes.</p>"
@@ -355,7 +390,7 @@ class ClientTaskManagementTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, "/")
+        self.assertRedirects(response, "/workspace/")
         task = Task.objects.get(title="Safe task")
         self.assertNotIn("script", task.description.lower())
         self.assertNotIn("javascript:", task.description.lower())
@@ -452,7 +487,7 @@ class ClientTaskManagementTests(TestCase):
 
         self.assertEqual(confirm_response.status_code, 200)
         self.assertContains(confirm_response, "Delete")
-        self.assertRedirects(delete_response, "/")
+        self.assertRedirects(delete_response, "/workspace/")
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
 
     def test_other_client_cannot_access_owned_task(self) -> None:
@@ -813,7 +848,7 @@ class ProjectCollaborationTests(TestCase):
         )
         self.client.force_login(self.invitee)
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Pending invitations")
@@ -833,7 +868,7 @@ class ProjectCollaborationTests(TestCase):
         )
         self.client.force_login(self.invitee)
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertContains(response, "No pending invitations.")
         self.assertNotContains(response, self.project.name)
@@ -846,6 +881,6 @@ class ProjectCollaborationTests(TestCase):
         self.client.force_login(self.invitee)
         self.client.post(f"/invitations/{invitation.token}/accept/")
 
-        response = self.client.get("/")
+        response = self.client.get("/workspace/")
 
         self.assertContains(response, self.project.name)
