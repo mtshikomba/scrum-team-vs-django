@@ -43,10 +43,12 @@ from core.views import (
     ClientProjectInvitationAcceptByIdView,
     ClientProjectInvitationDeclineByIdView,
     HealthCheckView,
+    PublicLandingPageView,
 )
 
 urlpatterns = [
-    path("", ClientLandingPageView.as_view(), name="client-landing"),
+    path("", PublicLandingPageView.as_view(), name="public-landing"),
+    path("workspace/", ClientLandingPageView.as_view(), name="client-landing"),
     path("accounts/register/", ClientRegistrationView.as_view(), name="register"),
     path("profile/", ClientProfileView.as_view(), name="profile"),
     path(

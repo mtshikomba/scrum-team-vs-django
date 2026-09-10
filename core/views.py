@@ -85,6 +85,12 @@ class ClientPasswordChangeView(ClientAccessMixin, PasswordChangeView):
         return kwargs
 
 
+class PublicLandingPageView(TemplateView):
+    """Render the public customer-facing product landing page."""
+
+    template_name = "core/public_landing.html"
+
+
 class ClientLandingPageView(ClientAccessMixin, TemplateView):
     """Render the authenticated client's task management landing page."""
 
