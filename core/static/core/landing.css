@@ -42,6 +42,13 @@ h1 { max-width: 690px; margin-bottom: 16px; font-size: clamp(2.8rem, 6vw, 5.4rem
 .summary-label { color: var(--muted); }
 .summary-card strong { display: block; margin: 25px 0 8px; font-size: 3rem; font-weight: 400; line-height: 0.9; }
 .summary-note { color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.invitation-panel { margin-top: 32px; padding: 24px; background: var(--blue-wash); border: 1px solid var(--line); }
+.invitation-panel .section-heading { margin-bottom: 16px; }
+.invitation-panel h2 { font-size: 1.8rem; }
+.invitation-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line); }
+.invitation-row > div { display: grid; gap: 6px; min-width: 0; }
+.invitation-row strong { overflow-wrap: anywhere; font-size: 1.05rem; font-weight: 400; }
+.invitation-row span { color: var(--muted); font: 0.78rem/1.4 Arial, sans-serif; }
 .task-section { margin-top: 72px; }
 .task-view-controls { display: inline-flex; gap: 4px; margin: 0 0 20px; padding: 4px; background: var(--white); border: 1px solid var(--line); }
 .view-toggle { padding: 8px 12px; color: var(--muted); background: transparent; border: 0; cursor: pointer; font: 700 0.7rem/1 Arial, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -142,6 +149,9 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
     .summary-grid { grid-template-columns: 1fr; }
     .summary-card { min-height: 130px; }
     .summary-card strong { margin-top: 18px; }
+    .invitation-panel { margin-top: 24px; padding: 18px; }
+    .invitation-row { align-items: stretch; flex-direction: column; gap: 14px; }
+    .invitation-row .primary-button { width: 100%; }
     .task-section { margin-top: 52px; }
     .section-heading { align-items: start; flex-wrap: wrap; }
     .task-view-controls { margin-left: 0; }

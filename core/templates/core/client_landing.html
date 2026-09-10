@@ -49,6 +49,27 @@
                 </article>
             </section>
 
+            <section class="invitation-panel" aria-labelledby="invitation-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Collaboration</p>
+                        <h2 id="invitation-title">Pending invitations</h2>
+                    </div>
+                    <span class="task-count">{{ pending_invitations|length }} invitation{{ pending_invitations|length|pluralize }}</span>
+                </div>
+                {% for invitation in pending_invitations %}
+                    <article class="invitation-row">
+                        <div>
+                            <strong>{{ invitation.project.name }}</strong>
+                            <span>Invited by {{ invitation.inviter.username }}</span>
+                        </div>
+                        <a class="primary-button" href="{% url 'invitation-review' invitation.pk %}">Review invitation</a>
+                    </article>
+                {% empty %}
+                    <p class="form-note">No pending invitations.</p>
+                {% endfor %}
+            </section>
+
             <section class="task-section" id="task-list" aria-labelledby="task-list-title">
                 <div class="section-heading">
                     <div>

@@ -91,8 +91,8 @@ class ClientLandingPageView(ClientAccessMixin, TemplateView):
     template_name = "core/client_landing.html"
 
     def get_projects(self) -> QuerySet[Project]:
-        """Return only projects owned by the authenticated client."""
-        return Project.objects.filter(client=self.request.user).annotate(
+        """Return projects owned by or shared with the authenticated client."""
+        return accessible_projects(self.request.user).annotate(
             task_count=Count("tasks")
         )
 
@@ -107,6 +107,10 @@ class ClientLandingPageView(ClientAccessMixin, TemplateView):
         status_counts = tasks.values("status").annotate(total=Count("id"))
         counts = {item["status"]: item["total"] for item in status_counts}
         context["projects"] = self.get_projects()
+        context["pending_invitations"] = ProjectInvitation.objects.filter(
+            invitee=self.request.user,
+            status=ProjectInvitation.Status.PENDING,
+        ).select_related("project", "inviter")
         context["tasks"] = tasks
         context["task_lanes"] = build_task_lanes(tasks)
         context["task_statuses"] = Task.Status.choices
@@ -415,6 +419,60 @@ class ClientProjectInvitationAcceptView(ClientAccessMixin, View):
         if invitation is None:
             raise Http404
         return invitation
+
+
+class ClientProjectInvitationReviewView(ClientAccessMixin, View):
+    """Render a pending invitation without exposing its token in the inbox."""
+
+    def get(self, request: HttpRequest, pk: int):
+        """Show a recipient's pending invitation confirmation page."""
+        invitation = get_object_or_404(
+            ProjectInvitation.objects.select_related("project", "inviter"),
+            pk=pk,
+            invitee=request.user,
+            status=ProjectInvitation.Status.PENDING,
+        )
+        return render(
+            request, "core/project_invitation.html", {"invitation": invitation}
+        )
+
+
+class ClientProjectInvitationAcceptByIdView(ClientAccessMixin, View):
+    """Accept a pending invitation from the recipient inbox flow."""
+
+    def post(self, request: HttpRequest, pk: int):
+        """Activate membership for the intended recipient."""
+        invitation = get_object_or_404(
+            ProjectInvitation,
+            pk=pk,
+            invitee=request.user,
+            status=ProjectInvitation.Status.PENDING,
+        )
+        ProjectMembership.objects.update_or_create(
+            project=invitation.project,
+            user=request.user,
+            defaults={"is_active": True},
+        )
+        invitation.status = ProjectInvitation.Status.ACCEPTED
+        invitation.accepted_at = timezone.now()
+        invitation.save(update_fields=["status", "accepted_at"])
+        return redirect(invitation.project.get_absolute_url())
+
+
+class ClientProjectInvitationDeclineByIdView(ClientAccessMixin, View):
+    """Decline a pending invitation from the recipient inbox flow."""
+
+    def post(self, request: HttpRequest, pk: int):
+        """Mark the intended recipient's invitation as declined."""
+        invitation = get_object_or_404(
+            ProjectInvitation,
+            pk=pk,
+            invitee=request.user,
+            status=ProjectInvitation.Status.PENDING,
+        )
+        invitation.status = ProjectInvitation.Status.DECLINED
+        invitation.save(update_fields=["status"])
+        return redirect("client-landing")
 
 
 class ClientProjectInvitationDeclineView(ClientAccessMixin, View):
