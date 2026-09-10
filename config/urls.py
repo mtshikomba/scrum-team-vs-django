@@ -39,6 +39,9 @@ from core.views import (
     ClientTaskStatusView,
     ClientTaskUpdateView,
     ClientProjectInvitationAcceptView,
+    ClientProjectInvitationReviewView,
+    ClientProjectInvitationAcceptByIdView,
+    ClientProjectInvitationDeclineByIdView,
     HealthCheckView,
 )
 
@@ -82,6 +85,21 @@ urlpatterns = [
         "invitations/<uuid:token>/accept/",
         ClientProjectInvitationAcceptView.as_view(),
         name="invitation-accept",
+    ),
+    path(
+        "invitations/<int:pk>/",
+        ClientProjectInvitationReviewView.as_view(),
+        name="invitation-review",
+    ),
+    path(
+        "invitations/<int:pk>/accept/",
+        ClientProjectInvitationAcceptByIdView.as_view(),
+        name="invitation-accept-by-id",
+    ),
+    path(
+        "invitations/<int:pk>/decline/",
+        ClientProjectInvitationDeclineByIdView.as_view(),
+        name="invitation-decline-by-id",
     ),
     path(
         "invitations/<uuid:token>/decline/",

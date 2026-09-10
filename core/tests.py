@@ -805,3 +805,47 @@ class ProjectCollaborationTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_invitee_workspace_shows_pending_invitation(self) -> None:
+        """An invitee can discover pending invitations from the workspace."""
+        invitation = ProjectInvitation.objects.create(
+            project=self.project, inviter=self.owner, invitee=self.invitee
+        )
+        self.client.force_login(self.invitee)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pending invitations")
+        self.assertContains(response, self.project.name)
+        self.assertContains(response, self.owner.username)
+        self.assertNotContains(response, str(invitation.token), html=False)
+
+    def test_workspace_hides_terminal_invitations_and_preserves_empty_state(
+        self,
+    ) -> None:
+        """Terminal invitations do not appear as actionable inbox entries."""
+        ProjectInvitation.objects.create(
+            project=self.project,
+            inviter=self.owner,
+            invitee=self.invitee,
+            status=ProjectInvitation.Status.DECLINED,
+        )
+        self.client.force_login(self.invitee)
+
+        response = self.client.get("/")
+
+        self.assertContains(response, "No pending invitations.")
+        self.assertNotContains(response, self.project.name)
+
+    def test_invitation_acceptance_makes_project_discoverable(self) -> None:
+        """Accepting an invitation adds the project to the invitee workspace."""
+        invitation = ProjectInvitation.objects.create(
+            project=self.project, inviter=self.owner, invitee=self.invitee
+        )
+        self.client.force_login(self.invitee)
+        self.client.post(f"/invitations/{invitation.token}/accept/")
+
+        response = self.client.get("/")
+
+        self.assertContains(response, self.project.name)
