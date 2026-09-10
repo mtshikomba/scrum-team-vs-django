@@ -150,7 +150,26 @@ class ClientTaskCreateView(ClientAccessMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["client"] = self.request.user
         kwargs["projects"] = accessible_projects(self.request.user)
+        project_id = self.request.GET.get("project")
+        if project_id:
+            project = (
+                accessible_projects(self.request.user).filter(pk=project_id).first()
+            )
+            if project is None:
+                raise Http404
+            kwargs["project_context"] = project
         return kwargs
+
+    def get_context_data(self, **kwargs: object) -> dict[str, object]:
+        """Expose project context for the create form presentation."""
+        context = super().get_context_data(**kwargs)
+        project_id = self.request.GET.get("project")
+        context["project_context"] = (
+            accessible_projects(self.request.user).filter(pk=project_id).first()
+            if project_id
+            else None
+        )
+        return context
 
     def form_valid(self, form: TaskForm):
         """Set task ownership from the authenticated user, never form data."""

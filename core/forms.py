@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
+from typing import Optional
 
 from core.models import Project, ProjectInvitation, ProjectMembership, Task
 from core.sanitization import clean_rich_text
@@ -38,12 +39,19 @@ class TaskForm(forms.ModelForm):
         *args: object,
         client: User,
         projects=None,
+        project_context: Optional[Project] = None,
         **kwargs: object,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.fields["project"].queryset = (
             projects if projects is not None else Project.objects.filter(client=client)
         )
+        if project_context is not None:
+            self.fields["project"].queryset = Project.objects.filter(
+                pk=project_context.pk
+            )
+            self.fields["project"].initial = project_context.pk
+            self.fields["project"].disabled = True
 
     def clean_description(self) -> str:
         """Sanitize rich-text content before saving it."""

@@ -129,6 +129,17 @@ h2 { margin-bottom: 0; font-size: 2.5rem; font-weight: 400; letter-spacing: -0.0
 .danger-button { color: var(--white); background: #a44f43; border: 1px solid #a44f43; cursor: pointer; }
 .back-link { display: inline-block; margin-bottom: 32px; color: var(--muted); font: 700 0.75rem/1 Arial, sans-serif; text-decoration: none; text-transform: uppercase; }
 .task-form-panel { width: min(100%, 560px); }
+.task-form-panel .task-project-context { margin: -12px 0 24px; padding: 14px 16px; color: var(--teal-dark); background: var(--blue-wash); border-left: 3px solid var(--teal); }
+.task-form-panel form { display: grid; gap: 16px; }
+.task-form-panel form p { display: grid; gap: 8px; margin: 0; font: 700 0.75rem/1.2 Arial, sans-serif; text-transform: uppercase; }
+.task-form-panel form input, .task-form-panel form select, .task-form-panel form textarea { width: 100%; padding: 12px; border: 1px solid var(--line); font: 1rem Georgia, serif; }
+.task-form-panel form textarea { min-height: 120px; resize: vertical; }
+.task-form-panel form > p, .task-form-panel form > div { min-width: 0; }
+.task-form-panel .ck-editor-container, .task-form-panel .ck-editor { width: 100% !important; max-width: 100%; min-width: 0 !important; }
+.task-form-panel .ck-toolbar { max-width: 100%; overflow-x: auto; }
+.task-form-panel .ck-toolbar__items { flex-wrap: wrap; }
+.task-form-panel form .helptext { margin-top: 0; }
+.task-form-panel form .errorlist { margin: 0; }
 .form-note { color: var(--muted); line-height: 1.5; }
 .detail-panel { max-width: 760px; padding: 72px 0; }
 .detail-panel.project-page { max-width: none; }

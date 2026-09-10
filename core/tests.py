@@ -374,6 +374,37 @@ class ClientTaskManagementTests(TestCase):
             created_task.description, "<p>Important <strong>project</strong> notes.</p>"
         )
 
+    def test_project_context_prefills_task_create(self) -> None:
+        """Project-scoped creation associates the task with the URL project."""
+        response = self.client.get(f"/tasks/new/?project={self.project.pk}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["project_context"], self.project)
+        self.assertContains(response, self.project.name)
+
+        response = self.client.post(
+            f"/tasks/new/?project={self.project.pk}",
+            {
+                "title": "Contextual task",
+                "project": self.project.pk,
+                "status": Task.Status.OUTSTANDING,
+                "priority": Task.Priority.MEDIUM,
+            },
+        )
+
+        self.assertRedirects(response, "/workspace/")
+        self.assertTrue(
+            Task.objects.filter(title="Contextual task", project=self.project).exists()
+        )
+
+    def test_task_edit_keeps_project_selector_available(self) -> None:
+        """Editing a task keeps the project field editable."""
+        response = self.client.get(f"/tasks/{self.task.pk}/edit/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="project"')
+        self.assertContains(response, self.project.name)
+
     def test_task_description_sanitizes_unsafe_html(self) -> None:
         """Task descriptions preserve formatting without executable markup."""
         response = self.client.post(
